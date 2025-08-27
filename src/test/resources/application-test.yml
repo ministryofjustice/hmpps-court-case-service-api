@@ -7,3 +7,9 @@ management.endpoint:
 
 hmpps-auth:
   url: "http://localhost:8090/auth"
+
+spring:
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/hmpps_court_case_service
+    username: admin
+    password: password
