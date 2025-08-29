@@ -17,6 +17,7 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
   implementation("org.postgresql:r2dbc-postgresql")
   runtimeOnly("org.postgresql:postgresql")
+  runtimeOnly("org.flywaydb:flyway-database-postgresql:11.9.1")
 
   testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:1.4.11")
   testImplementation("org.wiremock:wiremock-standalone:3.13.1")
@@ -24,6 +25,7 @@ dependencies {
     exclude(group = "io.swagger.core.v3")
   }
   testImplementation("io.projectreactor:reactor-test")
+  testImplementation("org.testcontainers:postgresql:1.21.3")
 }
 
 kotlin {

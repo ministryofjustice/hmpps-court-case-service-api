@@ -1,4 +1,3 @@
-version: "3"
 services:
   hmpps-court-case-service-api:
     build:
@@ -13,7 +12,7 @@ services:
     environment:
       - SERVER_PORT=8080
       - HMPPS_AUTH_URL=http://hmpps-auth:8080/auth
-      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_PROFILES_ACTIVE=local
 
   hmpps-auth:
     image: quay.io/hmpps/hmpps-auth:latest
@@ -29,5 +28,22 @@ services:
       - SPRING_PROFILES_ACTIVE=dev
       - APPLICATION_AUTHENTICATION_UI_ALLOWLIST=0.0.0.0/0
 
+  postgres:
+    image: postgres:latest
+    container_name: hmpps_court_case_service_postgres_db
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=hmpps_court_case_service_db
+#    volumes:
+#      - postgres-db-volume:/var/lib/postgresql/data
+#      - ./src/main/resources/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - 5432:5432
+
 networks:
   hmpps:
+
+volumes:
+  postgres-db-volume:
+

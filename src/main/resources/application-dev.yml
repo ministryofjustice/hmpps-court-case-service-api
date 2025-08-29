@@ -1,2 +1,7 @@
 hmpps-auth:
   url: "http://localhost:8090/auth"
+
+database:
+  endpoint: ${database.endpoint}}
+  username: ${database.username}}
+  password: ${database.password}}
