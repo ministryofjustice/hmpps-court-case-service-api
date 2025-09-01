@@ -21,6 +21,8 @@ spring:
     url: r2dbc:postgresql://${database.endpoint}/${database.name}?currentSchema=${database.schema.name}&stringtype=unspecified&sslmode=verify-full
     username: ${database.username}
     password: ${database.password}
+  datasource:
+    url: jdbc:postgresql://${database.endpoint:localhost:5432}/${database.name:postgres}?currentSchema=${database.schema.name}&user=${database.username:root}&password=${database.password:dev}&stringtype=unspecified
   security:
     oauth2:
       resourceserver:
