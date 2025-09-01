@@ -15,14 +15,33 @@ spring:
 
   security:
     oauth2:
-      resourceserver:
-        jwt:
-          jwk-set-uri: ${hmpps-auth.url}/.well-known/jwks.json
-
       client:
         provider:
-          hmpps-auth:
-            token-uri: ${hmpps-auth.url}/oauth/token
+          nomis-oauth-service:
+            token-uri: ${nomis-oauth.base-url}/oauth/token
+      resourceserver:
+        jwt:
+          issuer-uri: ${nomis-oauth.issuer-base-url:${nomis-oauth.base-url}}/issuer
+          jwk-set-uri: ${nomis-oauth.base-url}/.well-known/jwks.json
+  r2dbc:
+    url: r2dbc:postgresql://${database.endpoint}/${database.name}?currentSchema=${database.schema.name}&stringtype=unspecified&sslmode=verify-full
+    username: ${database.username}
+    password: ${database.password}
+    pool:
+      enabled: true
+      initial-size: 5
+      max-size: 20
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    user: ${database.username}
+    password: ${database.password}
+    url: jdbc:postgresql://${database.endpoint}/${database.name}?currentSchema=${database.schema.name}
+
+database:
+  schema:
+    name: hmpps_court_case_service
 
 server:
   port: 8080

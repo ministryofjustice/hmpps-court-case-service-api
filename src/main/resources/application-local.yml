@@ -1,0 +1,8 @@
+nomis-oauth:
+  base-url: https://sign-in-dev.hmpps.service.justice.gov.uk/auth
+
+database:
+  name: hmpps_court_case_service_db
+  endpoint: localhost:5432
+  username: admin
+  password: password
