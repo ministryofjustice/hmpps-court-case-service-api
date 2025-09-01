@@ -1,8 +1,8 @@
-hmpps-auth:
-  url: "http://localhost:8090/auth"
+nomis-oauth:
+  base-url: https://sign-in-dev.hmpps.service.justice.gov.uk/auth
 
 database:
-  endpoint: ${rds_instance_endpoint}}
-  name: ${database_name}}
-  username: ${database_username}}
-  password: ${database_password}}
+  endpoint: ${rds_instance_endpoint}
+  name: ${database_name}
+  username: ${database_username}
+  password: ${database_password}

@@ -5,11 +5,24 @@ management.endpoint:
   health.cache.time-to-live: 0
   info.cache.time-to-live: 0
 
-hmpps-auth:
-  url: "http://localhost:8090/auth"
+nomis-oauth:
+  base-url: http://localhost:8090/auth
+
+database:
+  schema:
+    name: courtcaseservicetest
+  name: hmpps_court_case_service_db
+  endpoint: localhost:5432
+  username: admin
+  password: password
 
 spring:
   r2dbc:
-    url: r2dbc:postgresql://localhost:5432/hmpps_court_case_service
-    username: admin
-    password: password
+    url: r2dbc:postgresql://${database.endpoint}/${database.name}?currentSchema=${database.schema.name}&stringtype=unspecified&sslmode=verify-full
+    username: ${database.username}
+    password: ${database.password}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${nomis-oauth.base-url}/.well-known/jwks.json

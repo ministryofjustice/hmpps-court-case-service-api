@@ -1,4 +1,4 @@
-hmpps-auth:
+nomis-oauth:
   base-url: https://sign-in-dev.hmpps.service.justice.gov.uk/auth
 
 database:

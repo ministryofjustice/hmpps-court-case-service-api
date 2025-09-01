@@ -18,12 +18,11 @@ spring:
       client:
         provider:
           nomis-oauth-service:
-            token-uri: ${hmpps-auth.base-url}/oauth/token
+            token-uri: ${nomis-oauth.base-url}/oauth/token
       resourceserver:
         jwt:
-          issuer-uri: ${hmpps-auth.issuer-base-url:${hmpps-auth.base-url}}/issuer
-          jwk-set-uri: ${hmpps-auth.base-url}/.well-known/jwks.json
-
+          issuer-uri: ${nomis-oauth.issuer-base-url:${nomis-oauth.base-url}}/issuer
+          jwk-set-uri: ${nomis-oauth.base-url}/.well-known/jwks.json
   r2dbc:
     url: r2dbc:postgresql://${database.endpoint}/${database.name}?currentSchema=${database.schema.name}&stringtype=unspecified&sslmode=verify-full
     username: ${database.username}
