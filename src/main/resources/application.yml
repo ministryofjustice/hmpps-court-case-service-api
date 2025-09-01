@@ -23,21 +23,6 @@ spring:
         jwt:
           issuer-uri: ${nomis-oauth.issuer-base-url:${nomis-oauth.base-url}}/issuer
           jwk-set-uri: ${nomis-oauth.base-url}/.well-known/jwks.json
-  r2dbc:
-    url: r2dbc:postgresql://${database.endpoint}/${database.name}?currentSchema=${database.schema.name}&stringtype=unspecified&sslmode=verify-full
-    username: ${database.username}
-    password: ${database.password}
-    pool:
-      enabled: true
-      initial-size: 5
-      max-size: 20
-
-  flyway:
-    enabled: true
-    locations: classpath:db/migration
-    user: ${database.username}
-    password: ${database.password}
-    url: jdbc:postgresql://${database.endpoint}/${database.name}?currentSchema=${database.schema.name}
 
 database:
   schema:
