@@ -11,10 +11,10 @@ nomis-oauth:
 database:
   schema:
     name: courtcaseservicetest
-  name: hmpps_court_case_service_db
+  name: postgres
   endpoint: localhost:5432
-  username: admin
-  password: password
+  username: root
+  password: dev
 
 spring:
   r2dbc:
