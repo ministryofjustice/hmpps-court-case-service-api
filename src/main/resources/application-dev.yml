@@ -2,6 +2,7 @@ hmpps-auth:
   url: "http://localhost:8090/auth"
 
 database:
-  endpoint: ${database.endpoint}}
-  username: ${database.username}}
-  password: ${database.password}}
+  endpoint: ${rds_instance_endpoint}}
+  name: ${database_name}}
+  username: ${database_username}}
+  password: ${database_password}}
