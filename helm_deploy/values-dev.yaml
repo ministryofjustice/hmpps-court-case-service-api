@@ -1,6 +1,9 @@
 ---
 # Per environment values which override defaults in hmpps-court-case-service-api/values.yaml
 
+spring:
+  profile: dev
+
 generic-service:
   replicaCount: 2
 
