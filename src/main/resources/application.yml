@@ -28,6 +28,13 @@ database:
   schema:
     name: hmpps_court_case_service
 
+r2dbc:
+  migrate:
+    resources:
+      - resource-path: classpath:db/migration/premigration/*.sql
+      - resource-path: classpath:db/migration/*.sql
+    migrations-schema: hmpps_court_case_service
+
 server:
   port: 8080
   servlet:

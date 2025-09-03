@@ -16,6 +16,7 @@ dependencies {
   implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:2.8.11")
   implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
   implementation("org.postgresql:r2dbc-postgresql")
+  implementation("name.nkonev.r2dbc-migrate:r2dbc-migrate-spring-boot-starter:3.3.0")
   runtimeOnly("org.postgresql:postgresql")
   runtimeOnly("org.flywaydb:flyway-database-postgresql:11.9.1")
 

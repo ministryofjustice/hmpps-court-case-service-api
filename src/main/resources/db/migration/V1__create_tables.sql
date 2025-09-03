@@ -1,5 +1,3 @@
--- Are the data types correct in this script correct?
-
 CREATE TABLE verdict (
     id INT PRIMARY KEY,
     verdict_date DATE,

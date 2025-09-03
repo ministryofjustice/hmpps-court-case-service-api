@@ -9,13 +9,6 @@ database:
 
 spring:
   r2dbc:
-    url: r2dbc:postgresql://${database.endpoint}/${database.name}?currentSchema=${database.schema.name}&stringtype=unspecified&sslmode=verify-full
+    url: r2dbc:postgresql://${database.endpoint}/${database.name}?schema=${database.schema.name}&stringtype=unspecified&sslmode=disable
     username: ${database.username}
     password: ${database.password}
-
-  flyway:
-    enabled: true
-    locations: classpath:db/migration
-    user: ${database.username}
-    password: ${database.password}
-    url: jdbc:postgresql://${database.endpoint}/${database.name}?currentSchema=${database.schema.name}
