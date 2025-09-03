@@ -12,10 +12,6 @@ spring:
     url: r2dbc:postgresql://${database.endpoint}/${database.name}?currentSchema=${database.schema.name}&stringtype=unspecified&sslmode=verify-full
     username: ${database.username}
     password: ${database.password}
-    pool:
-      enabled: true
-      initial-size: 5
-      max-size: 20
 
   flyway:
     enabled: true
