@@ -3,17 +3,6 @@ nomis-oauth:
 
 spring:
   r2dbc:
-    url: r2dbc:postgresql://${RDS_INSTANCE_ENDPOINT}/${DATABASE_NAME}?currentSchema=${database.schema.name}&stringtype=unspecified&sslmode=verify-full
+    url: r2dbc:postgresql://${RDS_INSTANCE_ENDPOINT}/${DATABASE_NAME}?schema=${database.schema.name}&stringtype=unspecified&sslmode=verify-full
     username: ${DATABASE_USERNAME}
     password: ${DATABASE_PASSWORD}
-    pool:
-      enabled: true
-      initial-size: 5
-      max-size: 20
-
-  flyway:
-    enabled: true
-    locations: classpath:db/migration
-    user: ${DATABASE_USERNAME}
-    password: ${DATABASE_PASSWORD}
-    url: jdbc:postgresql://${RDS_INSTANCE_ENDPOINT}/${DATABASE_NAME}?currentSchema=${database.schema.name}

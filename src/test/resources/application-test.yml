@@ -11,20 +11,22 @@ nomis-oauth:
 database:
   schema:
     name: courtcaseservicetest
-  name: postgres
+  name: hmpps_court_case_service_db
   endpoint: localhost:5432
-  username: root
-  password: dev
+  username: admin
+  password: password
 
 spring:
   r2dbc:
-    url: r2dbc:postgresql://${database.endpoint}/${database.name}?currentSchema=${database.schema.name}&stringtype=unspecified&sslmode=verify-full
+    url: r2dbc:postgresql://${database.endpoint}/${database.name}?currentSchema=${database.schema.name}&stringtype=unspecified&sslmode=disable
     username: ${database.username}
     password: ${database.password}
-  flyway:
-    enabled: false
   security:
     oauth2:
       resourceserver:
         jwt:
           jwk-set-uri: ${nomis-oauth.base-url}/.well-known/jwks.json
+
+r2dbc:
+  migrate:
+    enable: false

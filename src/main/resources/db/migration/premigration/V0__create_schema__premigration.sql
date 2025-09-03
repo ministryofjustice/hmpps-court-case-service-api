@@ -1,0 +1,1 @@
+CREATE SCHEMA IF NOT EXISTS "hmpps_court_case_service";
