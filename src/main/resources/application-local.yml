@@ -9,6 +9,8 @@ database:
 
 spring:
   r2dbc:
-    url: r2dbc:postgresql://${database.endpoint}/${database.name}?schema=${database.schema.name}&stringtype=unspecified&sslmode=disable
+    url: r2dbc:postgresql://${database.endpoint}/${database.name}?schema=${database.schema.name}
     username: ${database.username}
     password: ${database.password}
+    properties:
+      ssl: false
