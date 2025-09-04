@@ -3,6 +3,6 @@ nomis-oauth:
 
 spring:
   r2dbc:
-    url: r2dbc:pool:postgresql://${RDS_INSTANCE_ENDPOINT}/${DATABASE_NAME}?schema=${database.schema.name}
+    url: r2dbc:pool:postgresql://${RDS_INSTANCE_ENDPOINT}/${DATABASE_NAME}?schema=${database.schema.name}&stringtype=unspecified&sslmode=require
     username: ${DATABASE_USERNAME}
     password: ${DATABASE_PASSWORD}
