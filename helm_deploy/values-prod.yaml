@@ -4,6 +4,7 @@
 generic-service:
   ingress:
     host: court-case-service-api.hmpps.service.justice.gov.uk
+    tlsSecretName: court-probation-cert-secret
 
   env:
     HMPPS_AUTH_URL: "https://sign-in.hmpps.service.justice.gov.uk/auth"

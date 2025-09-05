@@ -1,14 +1,12 @@
 ---
 # Per environment values which override defaults in hmpps-court-case-service-api/values.yaml
 
-spring:
-  profile: preprod
-
 generic-service:
   replicaCount: 2
 
   ingress:
     host: court-case-service-api-preprod.hmpps.service.justice.gov.uk
+    tlsSecretName: court-probation-preprod-cert-secret
 
   env:
     SPRING_PROFILES_ACTIVE: "preprod"
