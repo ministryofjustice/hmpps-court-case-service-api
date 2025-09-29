@@ -10,7 +10,7 @@ CREATE TABLE offence (
     short_term_custody_predictor_score DECIMAL(10,2),
     verdict JSONB,
     plea JSONB,
-    judicialResult JSONB[],
+    judicial_results JSONB,
     created_at TIMESTAMP,
     created_by TEXT,
     updated_at TIMESTAMP,
