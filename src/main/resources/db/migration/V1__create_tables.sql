@@ -74,7 +74,7 @@ CREATE TABLE offender (
 
 CREATE TABLE prosecution_case (
     id INT PRIMARY KEY,
-    case_urn TEXT,
+    case_urn JSONB,
     source_type TEXT,
     c_id INT,
     case_markers JSONB,
