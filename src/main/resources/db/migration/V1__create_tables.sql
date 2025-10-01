@@ -2,12 +2,11 @@ CREATE TABLE offence (
     id INT PRIMARY KEY,
     code VARCHAR(20),
     title TEXT,
-    act TEXT,
-    list_number VARCHAR(20),
+    legislation TEXT,
+    listing_number INT,
     sequence INT,
-    facts TEXT,
-    is_discontinued BOOLEAN,
     short_term_custody_predictor_score DECIMAL(10,2),
+    wording TEXT,
     verdict JSONB,
     plea JSONB,
     judicial_results JSONB,
@@ -22,9 +21,7 @@ CREATE TABLE offence (
 CREATE TABLE defendant (
     id INT PRIMARY KEY,
     master_defendant_id INT,
-    number_of_previous_convictions_cited TEXT,
-    manual_update TEXT,
-    mitigation TEXT,
+    is_manual_update BOOLEAN,
     crn TEXT,
     cro_number TEXT,
     is_youth BOOLEAN,
@@ -32,8 +29,9 @@ CREATE TABLE defendant (
     pnc_id INT,
     is_proceedings_concluded BOOLEAN,
     cpr_uuid TEXT,
-    offender_confirmed TEXT,
+    is_offender_confirmed BOOLEAN,
     person JSONB,
+    sex JSONB,
     created_at TIMESTAMP,
     created_by TEXT,
     updated_at TIMESTAMP,
@@ -59,10 +57,6 @@ CREATE TABLE defendant_offence (
 CREATE TABLE offender (
     id INT PRIMARY KEY,
     defendant_id INT NOT NULL,
-    sitting_day TEXT,
-    listing_sequence TEXT,
-    listed_duration_minutes TEXT,
-    is_cancelled TEXT,
     suspended_sentence_order TEXT,
     breach TEXT,
     awaiting_psr TEXT,
@@ -80,12 +74,11 @@ CREATE TABLE offender (
 
 CREATE TABLE prosecution_case (
     id INT PRIMARY KEY,
-    case_urn TEXT,
+    case_urn JSONB,
     source_type TEXT,
-    type_id TEXT,
-    type_code TEXT,
-    type_description TEXT,
-    case_document JSONB[],
+    c_id INT,
+    case_markers JSONB,
+    case_documents JSONB,
     created_at TIMESTAMP,
     created_by TEXT,
     updated_at TIMESTAMP,
@@ -127,8 +120,9 @@ CREATE TABLE hearing (
     type TEXT,
     event_type TEXT,
     list_number TEXT,
-    hearing_outcome JSONB[],
-    hearing_case_note JSONB[],
+    first_created TIMESTAMP,
+    hearing_outcome JSONB,
+    hearing_case_note JSONB,
     created_at TIMESTAMP,
     created_by TEXT,
     updated_at TIMESTAMP,
@@ -145,7 +139,7 @@ CREATE TABLE court_centre (
     room_name TEXT,
     psa_code TEXT,
     region TEXT,
-    address JSONB[],
+    address JSONB,
     created_at TIMESTAMP,
     created_by TEXT,
     updated_at TIMESTAMP,
@@ -154,7 +148,7 @@ CREATE TABLE court_centre (
     version INT
 );
 
-CREATE TABLE hearing_prosecution_case (
+CREATE TABLE prosecution_case_hearing (
     id INT PRIMARY KEY,
     hearing_id INT,
     prosecution_case_id INT,
@@ -168,7 +162,7 @@ CREATE TABLE hearing_prosecution_case (
     FOREIGN KEY (prosecution_case_id) REFERENCES prosecution_case(id)
 );
 
-CREATE TABLE hearing_defendant (
+CREATE TABLE defendant_hearing (
     id INT PRIMARY KEY,
     defendant_id INT NOT NULL,
     hearing_id INT NOT NULL,
@@ -200,7 +194,7 @@ CREATE TABLE hearing_day (
     FOREIGN KEY (court_centre_id) REFERENCES court_centre(id)
 );
 
-CREATE TABLE prosecution_case_defendant (
+CREATE TABLE defendant_prosecution_case (
     id INT PRIMARY KEY,
     defendant_id INT,
     prosecution_case_id INT,
