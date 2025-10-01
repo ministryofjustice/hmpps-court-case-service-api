@@ -148,7 +148,7 @@ CREATE TABLE court_centre (
     version INT
 );
 
-CREATE TABLE hearing_prosecution_case (
+CREATE TABLE prosecution_case_hearing (
     id INT PRIMARY KEY,
     hearing_id INT,
     prosecution_case_id INT,
@@ -162,7 +162,7 @@ CREATE TABLE hearing_prosecution_case (
     FOREIGN KEY (prosecution_case_id) REFERENCES prosecution_case(id)
 );
 
-CREATE TABLE hearing_defendant (
+CREATE TABLE defendant_hearing (
     id INT PRIMARY KEY,
     defendant_id INT NOT NULL,
     hearing_id INT NOT NULL,
@@ -194,7 +194,7 @@ CREATE TABLE hearing_day (
     FOREIGN KEY (court_centre_id) REFERENCES court_centre(id)
 );
 
-CREATE TABLE prosecution_case_defendant (
+CREATE TABLE defendant_prosecution_case (
     id INT PRIMARY KEY,
     defendant_id INT,
     prosecution_case_id INT,
