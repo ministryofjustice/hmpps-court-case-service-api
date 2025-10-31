@@ -1,0 +1,1 @@
+ALTER TABLE defendant ALTER COLUMN offender_id TYPE BIGINT;
