@@ -27,6 +27,7 @@ dependencies {
   }
   testImplementation("io.projectreactor:reactor-test")
   testImplementation("org.testcontainers:postgresql:1.21.3")
+  testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
 }
 
 kotlin {
