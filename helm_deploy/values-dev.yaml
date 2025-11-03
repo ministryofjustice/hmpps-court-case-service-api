@@ -5,7 +5,7 @@ generic-service:
   replicaCount: 2
 
   ingress:
-    host: court-case-service-api-dev.hmpps.service.justice.gov.uk
+    host: hmpps-court-case-service-api-dev.hmpps.service.justice.gov.uk
     tlsSecretName: court-probation-dev-cert-secret
 
   env:
