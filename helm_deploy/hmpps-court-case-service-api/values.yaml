@@ -25,7 +25,7 @@ generic-service:
   #     [name of environment variable as seen by app]: [key of kubernetes secret to load]
 
   namespace_secrets:
-    flipt:
+    pic-flipt:
       FLIPT_API_URL: "URL"
       FLIPT_API_KEY: "API_KEY"
     hmpps-court-case-service-api-application-insights:
