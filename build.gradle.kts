@@ -25,6 +25,7 @@ dependencies {
   testImplementation("io.swagger.parser.v3:swagger-parser:2.1.32") {
     exclude(group = "io.swagger.core.v3")
   }
+  testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
   testImplementation("org.wiremock:wiremock-standalone:3.13.1")
   testImplementation("org.testcontainers:postgresql:1.21.3")
   testImplementation("io.projectreactor:reactor-test")
