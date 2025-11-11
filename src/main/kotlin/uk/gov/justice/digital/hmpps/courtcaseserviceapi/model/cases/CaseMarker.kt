@@ -1,0 +1,14 @@
+package uk.gov.justice.digital.hmpps.courtcaseserviceapi.model.cases
+
+data class CaseMarker(
+  val id: Int,
+  val typeId: String?,
+  val typeCode: String?,
+  val typeDescription: String?,
+  val createdAt: String?,
+  val createdBy: String?,
+  val updatedAt: String?,
+  val updatedBy: String?,
+  val isDeleted: Boolean?,
+  val version: Int?,
+)
