@@ -6,11 +6,11 @@ generic-service:
 
   ingress:
     host: court-case-service-api-test.hmpps.service.justice.gov.uk
-    tlsSecretName: court-probation-dev-cert-secret
+    tlsSecretName: court-probation-test-cert-secret
 
   env:
     SPRING_PROFILES_ACTIVE: "test"
-    APPLICATIONINSIGHTS_CONFIGURATION_FILE: "applicationinsights.dev.json"
+    APPLICATIONINSIGHTS_CONFIGURATION_FILE: "applicationinsights.test.json"
     HMPPS_AUTH_URL: "https://sign-in-test.hmpps.service.justice.gov.uk/auth"
 
 # CloudPlatform AlertManager receiver to route prometheus alerts to slack
