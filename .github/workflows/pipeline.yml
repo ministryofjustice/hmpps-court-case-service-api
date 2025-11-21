@@ -76,6 +76,36 @@ jobs:
     with:
       environment: 'test'
       app_version: '${{ needs.build.outputs.app_version }}'
+  run_automated_tests:
+    name: Run the automated tests
+    runs-on: ubuntu-latest
+    needs:
+      - build
+      - helm_lint
+      - deploy_test
+    steps:
+      - name: Generate Token
+        uses: actions/create-github-app-token@v2
+        id: generate-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          permission-actions: write
+          repositories:
+            hmpps-probation-in-court-automation-tests-service
+      - name: Run the automated tests
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ steps.generate-token.outputs.token }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: 'hmpps-probation-in-court-automation-tests-service',
+              workflow_id: 'pipeline.yml',
+              ref: 'main'
+            })
+
   # deploy_preprod:
   #   name: Deploy to pre-production environment
   #   needs:
