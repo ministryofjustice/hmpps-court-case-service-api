@@ -1,0 +1,8 @@
+nomis-oauth:
+  base-url: https://sign-in-test.hmpps.service.justice.gov.uk/auth
+
+spring:
+  r2dbc:
+    url: r2dbc:pool:postgresql://${RDS_INSTANCE_ENDPOINT}/${DATABASE_NAME}?schema=${database.schema.name}&sslmode=require
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
