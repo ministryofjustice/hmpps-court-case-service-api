@@ -88,8 +88,8 @@ jobs:
         uses: actions/create-github-app-token@v2
         id: generate-token
         with:
-          app-id: ${{ secrets.github-test-runner-app-id }}
-          private-key: ${{ secrets.github-test-runner-secret-key }}
+          app-id: ${{ secrets.TEST_RUNNER_APP_ID }}
+          private-key: ${{ secrets.TEST_RUNNER_SECRET_KEY }}
           owner: ${{ github.repository_owner }}
           permission-actions: write
           repositories:
