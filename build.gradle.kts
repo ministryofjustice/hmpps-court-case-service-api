@@ -18,6 +18,7 @@ dependencies {
   implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:3.0.0")
   implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
   implementation("org.springframework.boot:spring-boot-starter-webflux")
+  implementation("com.github.f4b6a3:uuid-creator:6.1.1")
   implementation("org.postgresql:r2dbc-postgresql")
   runtimeOnly("org.postgresql:postgresql")
 
