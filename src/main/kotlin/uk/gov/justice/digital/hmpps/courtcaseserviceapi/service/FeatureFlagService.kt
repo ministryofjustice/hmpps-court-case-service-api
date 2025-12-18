@@ -10,25 +10,16 @@ import uk.gov.justice.digital.hmpps.courtcaseserviceapi.client.FeatureFlagReques
 import uk.gov.justice.digital.hmpps.courtcaseserviceapi.client.FeatureFlagResponse
 
 @Service
-@Cacheable("featureFlags")
 class FeatureFlagService(
   private val featureFlagClient: FeatureFlagClient,
 ) {
 
-  fun isFeatureEnabled(flagKey: String, context: Map<String, String>): Mono<FeatureFlagResponse> {
+  @Cacheable("featureFlags")
+  fun isFeatureEnabled(flagKey: String, context: Map<String, String>? = null): Mono<FeatureFlagResponse> {
     val request = FeatureFlagRequest(
       entityId = flagKey,
       flagKey = flagKey,
       context = context,
-    )
-    return featureFlagClient.getFeatureFlags(request)
-  }
-
-  fun isFeatureEnabled(flagKey: String): Mono<FeatureFlagResponse> {
-    val request = FeatureFlagRequest(
-      entityId = flagKey,
-      flagKey = flagKey,
-      context = null,
     )
     return featureFlagClient.getFeatureFlags(request)
   }
