@@ -1,1 +1,0 @@
-ALTER TABLE offender DROP COLUMN defendant_id;
