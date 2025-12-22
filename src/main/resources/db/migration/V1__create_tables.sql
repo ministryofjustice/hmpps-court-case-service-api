@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS offence(
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     created_by TEXT,
     updated_at TIMESTAMPTZ,
-    is_deleted BOOLEAN DEFAULT false NOT NULL,
+    is_soft_deleted BOOLEAN DEFAULT false NOT NULL,
     version INT DEFAULT 0 NOT NULL
 );
 
@@ -31,8 +31,8 @@ CREATE TABLE IF NOT EXISTS offender(
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     created_by TEXT,
     updated_at TIMESTAMPTZ,
-    is_deleted BOOLEAN DEFAULT false NOT NULL,
-    version INT DEFAULT 0 NOT NULL,
+    is_soft_deleted BOOLEAN DEFAULT false NOT NULL,
+    version INT DEFAULT 0 NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS prosecution_case(
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS prosecution_case(
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     created_by TEXT,
     updated_at TIMESTAMPTZ,
-    is_deleted BOOLEAN DEFAULT false NOT NULL,
+    is_soft_deleted BOOLEAN DEFAULT false NOT NULL,
     version INT DEFAULT 0 NOT NULL
 );
 
@@ -63,12 +63,13 @@ CREATE TABLE IF NOT EXISTS hearing(
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     created_by TEXT,
     updated_at TIMESTAMPTZ,
-    is_deleted BOOLEAN DEFAULT false NOT NULL,
+    is_soft_deleted BOOLEAN DEFAULT false NOT NULL,
     version INT DEFAULT 0 NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS court_centre(
     id UUID DEFAULT uuidv7() PRIMARY KEY,
+    legacy_id INT,
     code TEXT NOT NULL,
     name TEXT NOT NULL,
     court_room JSONB,
@@ -78,7 +79,7 @@ CREATE TABLE IF NOT EXISTS court_centre(
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     created_by TEXT,
     updated_at TIMESTAMPTZ,
-    is_deleted BOOLEAN DEFAULT false NOT NULL,
+    is_soft_deleted BOOLEAN DEFAULT false NOT NULL,
     version INT DEFAULT 0 NOT NULL
 );
 
@@ -103,7 +104,7 @@ CREATE TABLE IF NOT EXISTS defendant(
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     created_by TEXT,
     updated_at TIMESTAMPTZ,
-    is_deleted BOOLEAN DEFAULT false NOT NULL,
+    is_soft_deleted BOOLEAN DEFAULT false NOT NULL,
     version INT DEFAULT 0 NOT NULL,
     FOREIGN KEY (offender_id) REFERENCES offender(id) ON UPDATE CASCADE ON DELETE CASCADE
 );
@@ -116,7 +117,7 @@ CREATE TABLE IF NOT EXISTS offender_match_group(
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     created_by TEXT,
     updated_at TIMESTAMPTZ,
-    is_deleted BOOLEAN DEFAULT false NOT NULL,
+    is_soft_deleted BOOLEAN DEFAULT false NOT NULL,
     version INT DEFAULT 0 NOT NULL,
     FOREIGN KEY (defendant_id) REFERENCES defendant(id) ON UPDATE CASCADE ON DELETE CASCADE,
     FOREIGN KEY (prosecution_case_id) REFERENCES prosecution_case(id) ON UPDATE CASCADE ON DELETE CASCADE
@@ -134,7 +135,7 @@ CREATE TABLE IF NOT EXISTS offender_match(
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     created_by TEXT,
     updated_at TIMESTAMPTZ,
-    is_deleted BOOLEAN DEFAULT false NOT NULL,
+    is_soft_deleted BOOLEAN DEFAULT false NOT NULL,
     version INT DEFAULT 0 NOT NULL,
     FOREIGN KEY (offender_id) REFERENCES offender(id) ON UPDATE CASCADE ON DELETE CASCADE,
     FOREIGN KEY (offender_match_group_id) REFERENCES offender_match_group(id) ON UPDATE CASCADE ON DELETE CASCADE
@@ -154,7 +155,7 @@ CREATE TABLE IF NOT EXISTS case_comments(
     legacy_created_by_uuid UUID,
     created_by_uuid UUID DEFAULT uuidv7(),
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    is_deleted BOOLEAN DEFAULT false NOT NULL,
+    is_soft_deleted BOOLEAN DEFAULT false NOT NULL,
     version INT DEFAULT 0 NOT NULL,
     FOREIGN KEY (defendant_id) REFERENCES defendant(id) ON UPDATE CASCADE ON DELETE CASCADE,
     FOREIGN KEY (prosecution_case_id) REFERENCES prosecution_case(id) ON UPDATE CASCADE ON DELETE CASCADE
@@ -171,7 +172,7 @@ CREATE TABLE IF NOT EXISTS hearing_day(
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     created_by TEXT,
     updated_at TIMESTAMPTZ,
-    is_deleted BOOLEAN DEFAULT false NOT NULL,
+    is_soft_deleted BOOLEAN DEFAULT false NOT NULL,
     version INT DEFAULT 0 NOT NULL,
     FOREIGN KEY (court_centre_id) REFERENCES court_centre(id) ON UPDATE CASCADE ON DELETE CASCADE,
     FOREIGN KEY (hearing_id) REFERENCES hearing(id) ON UPDATE CASCADE ON DELETE CASCADE
@@ -184,7 +185,7 @@ CREATE TABLE IF NOT EXISTS defendant_offence(
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     created_by TEXT,
     updated_at TIMESTAMPTZ,
-    is_deleted BOOLEAN DEFAULT false NOT NULL,
+    is_soft_deleted BOOLEAN DEFAULT false NOT NULL,
     version INT DEFAULT 0 NOT NULL,
     FOREIGN KEY (offence_id) REFERENCES offence(id) ON UPDATE CASCADE ON DELETE CASCADE,
     FOREIGN KEY (defendant_id) REFERENCES defendant(id) ON UPDATE CASCADE ON DELETE CASCADE
@@ -197,7 +198,7 @@ CREATE TABLE IF NOT EXISTS defendant_prosecution_case(
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     created_by TEXT,
     updated_at TIMESTAMPTZ,
-    is_deleted BOOLEAN DEFAULT false NOT NULL,
+    is_soft_deleted BOOLEAN DEFAULT false NOT NULL,
     version INT DEFAULT 0 NOT NULL,
     FOREIGN KEY (defendant_id) REFERENCES defendant(id) ON UPDATE CASCADE ON DELETE CASCADE,
     FOREIGN KEY (prosecution_case_id) REFERENCES prosecution_case(id) ON UPDATE CASCADE ON DELETE CASCADE
@@ -210,7 +211,7 @@ CREATE TABLE IF NOT EXISTS defendant_hearing(
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     created_by TEXT,
     updated_at TIMESTAMPTZ,
-    is_deleted BOOLEAN DEFAULT false NOT NULL,
+    is_soft_deleted BOOLEAN DEFAULT false NOT NULL,
     version INT DEFAULT 0 NOT NULL,
     FOREIGN KEY (defendant_id) REFERENCES defendant(id) ON UPDATE CASCADE ON DELETE CASCADE,
     FOREIGN KEY (hearing_id) REFERENCES hearing(id) ON UPDATE CASCADE ON DELETE CASCADE
@@ -223,7 +224,7 @@ CREATE TABLE IF NOT EXISTS prosecution_case_hearing(
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     created_by TEXT,
     updated_at TIMESTAMPTZ,
-    is_deleted BOOLEAN DEFAULT false NOT NULL,
+    is_soft_deleted BOOLEAN DEFAULT false NOT NULL,
     version INT DEFAULT 0 NOT NULL,
     FOREIGN KEY (prosecution_case_id) REFERENCES prosecution_case(id) ON UPDATE CASCADE ON DELETE CASCADE,
     FOREIGN KEY (hearing_id) REFERENCES hearing(id) ON UPDATE CASCADE ON DELETE CASCADE
