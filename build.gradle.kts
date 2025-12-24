@@ -12,7 +12,7 @@ configurations {
 }
 
 dependencies {
-  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:1.7.0"){
+  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:1.7.0") {
     exclude(module = "spring-boot-starter-oauth2-resource-server")
     exclude(module = "spring-boot-starter-oauth2-client")
   }
