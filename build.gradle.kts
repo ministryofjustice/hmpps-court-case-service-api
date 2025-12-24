@@ -12,9 +12,17 @@ configurations {
 }
 
 dependencies {
-  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:1.7.0")
+  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:1.7.0"){
+    exclude(module = "spring-boot-starter-oauth2-resource-server")
+    exclude(module = "spring-boot-starter-oauth2-client")
+    exclude(module = "spring-boot-starter-security")
+  }
+  implementation("org.springframework.security:spring-security-oauth2-resource-server:7.0.0")
   implementation("name.nkonev.r2dbc-migrate:r2dbc-migrate-spring-boot-starter:3.3.0")
+  implementation("org.springframework.security:spring-security-oauth2-client:7.0.0")
   implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:5.6.3")
+  implementation("org.springframework.security:spring-security-oauth2-jose:7.0.0")
+  implementation("org.springframework.security:spring-security-webflux:7.0.0")
   implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:3.0.0")
   implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
   implementation("org.springframework.boot:spring-boot-starter-webflux")
@@ -25,6 +33,8 @@ dependencies {
   testImplementation("io.swagger.parser.v3:swagger-parser:2.1.35") {
     exclude(group = "io.swagger.core.v3")
   }
+  testImplementation("org.springframework.boot:spring-boot-starter-data-r2dbc-test")
+  testImplementation("org.springframework.boot:spring-boot-starter-security-test")
   testImplementation("org.mockito.kotlin:mockito-kotlin:6.1.0")
   testImplementation("org.wiremock:wiremock-standalone:3.13.1")
   testImplementation("org.testcontainers:postgresql:1.21.3")
