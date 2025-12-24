@@ -10,7 +10,7 @@ import org.springframework.security.web.server.util.matcher.PathPatternParserSer
 
 @Configuration
 @EnableWebFluxSecurity
-class SecurityConfiguration {
+class ApplicationSecurityConfiguration {
 
   @Bean
   fun apiHttpSecurity(http: ServerHttpSecurity): SecurityWebFilterChain {
