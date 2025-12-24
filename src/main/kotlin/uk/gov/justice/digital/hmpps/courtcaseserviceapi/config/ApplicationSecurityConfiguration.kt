@@ -2,21 +2,25 @@ package uk.gov.justice.digital.hmpps.courtcaseserviceapi.config
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Profile
 import org.springframework.security.config.Customizer.withDefaults
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity
+import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.config.web.server.ServerHttpSecurity
 import org.springframework.security.web.server.SecurityWebFilterChain
 import org.springframework.security.web.server.util.matcher.PathPatternParserServerWebExchangeMatcher
 
 @Configuration
 @EnableWebFluxSecurity
+@Profile("!unsecured")
 class ApplicationSecurityConfiguration {
 
   @Bean
   fun apiHttpSecurity(http: ServerHttpSecurity): SecurityWebFilterChain {
     return http.securityMatcher(PathPatternParserServerWebExchangeMatcher("/**"))
-      .authorizeExchange { auth ->
-        auth.pathMatchers(
+      .sessionManagement { SessionCreationPolicy.STATELESS }
+      .csrf { it.disable() }
+      .authorizeExchange { it.pathMatchers(
           "/health/**",
           "/info",
           "/ping",
@@ -31,7 +35,7 @@ class ApplicationSecurityConfiguration {
       }.oauth2Login(withDefaults())
       .oauth2Client(withDefaults())
       .oauth2ResourceServer { oauth2 ->
-        oauth2.jwt { jwt -> jwt.jwtAuthenticationConverter(TokenAuthenticationConverter()) }
+        oauth2.jwt { it.jwtAuthenticationConverter(TokenAuthenticationConverter()) }
       }.build()
   }
 }
