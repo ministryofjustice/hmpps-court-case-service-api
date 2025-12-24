@@ -14,9 +14,10 @@ class SecurityConfiguration {
 
   @Bean
   fun apiHttpSecurity(http: ServerHttpSecurity): SecurityWebFilterChain {
-    http.securityMatcher(PathPatternParserServerWebExchangeMatcher("/**"))
+    return http.securityMatcher(PathPatternParserServerWebExchangeMatcher("/**"))
       .authorizeExchange { auth ->
-        auth.pathMatchers("/health/**",
+        auth.pathMatchers(
+          "/health/**",
           "/info",
           "/ping",
           "/swagger-ui.html",
@@ -24,14 +25,13 @@ class SecurityConfiguration {
           "/v3/api-docs/**",
           "/queue-admin/retry-all-dlqs",
           "/process-un-resulted-cases",
-          "/hearing/delete-duplicates").permitAll()
-          .anyExchange().hasAnyRole("PREPARE_A_CASE", "SAR_DATA_ACCESS")
+          "/hearing/delete-duplicates",
+        ).permitAll()
+        .anyExchange().hasAnyRole("PREPARE_A_CASE", "SAR_DATA_ACCESS")
       }.oauth2Login(withDefaults())
       .oauth2Client(withDefaults())
       .oauth2ResourceServer { oauth2 ->
-        oauth2.jwt { jwt -> jwt.jwtAuthenticationConverter(TokenAuthenticationConverter())}
-      }
-
-    return http.build()
+        oauth2.jwt { jwt -> jwt.jwtAuthenticationConverter(TokenAuthenticationConverter()) }
+      }.build()
   }
 }
