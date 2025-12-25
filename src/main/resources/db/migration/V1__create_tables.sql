@@ -247,7 +247,7 @@ CREATE TABLE IF NOT EXISTS failed_messages(
     id UUID DEFAULT uuidv7() PRIMARY KEY,
     message_id UUID,
     correlation_id UUID,
-    failure_message TEXT NOT NULL,
+    error_message TEXT NOT NULL,
     original_message JSONB NOT NULL,
     source_type TEXT NOT NULL,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
