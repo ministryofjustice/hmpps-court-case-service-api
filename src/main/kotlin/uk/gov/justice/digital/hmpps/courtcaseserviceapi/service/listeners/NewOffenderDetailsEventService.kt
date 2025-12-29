@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.courtcaseserviceapi.service.listener
+package uk.gov.justice.digital.hmpps.courtcaseserviceapi.service.listeners
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
