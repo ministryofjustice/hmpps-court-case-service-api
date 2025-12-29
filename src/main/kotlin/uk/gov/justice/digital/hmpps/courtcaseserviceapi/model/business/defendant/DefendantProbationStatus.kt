@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonValue
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-enum class DefendantProbationStatus(val sex: String) {
+enum class DefendantProbationStatus(val status: String) {
   CURRENT("Current"),
   PREVIOUSLY_KNOWN("Previously known"),
   NOT_SENTENCED("Pre-sentence record"),
@@ -17,7 +17,7 @@ enum class DefendantProbationStatus(val sex: String) {
     private val DEFAULT = UNCONFIRMED_NO_RECORD
 
     fun of(status: String?): DefendantProbationStatus {
-      val probationStatus = status?.trim()?.uppercase() ?: DEFAULT.sex
+      val probationStatus = status?.trim()?.uppercase() ?: DEFAULT.status
       return try {
         val formattedString = probationStatus.replace(" ", "_")
         if (formattedString == "NO_RECORD") {
@@ -33,5 +33,5 @@ enum class DefendantProbationStatus(val sex: String) {
   }
 
   @JsonValue
-  fun getSex(): String = sex
+  fun getStatus(): String = status
 }
