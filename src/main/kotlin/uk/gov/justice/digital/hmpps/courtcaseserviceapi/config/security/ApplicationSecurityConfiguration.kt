@@ -18,9 +18,10 @@ class ApplicationSecurityConfiguration {
   @Bean
   fun apiHttpSecurity(http: ServerHttpSecurity): SecurityWebFilterChain = http.securityMatcher(PathPatternParserServerWebExchangeMatcher("/**"))
     .sessionManagement { SessionCreationPolicy.STATELESS }
-    .csrf { it.disable() }
-    .authorizeExchange {
-      it.pathMatchers(
+    .csrf { csrf -> csrf.disable() }
+    .oauth2Client(Customizer.withDefaults())
+    .authorizeExchange { exchanges ->
+      exchanges.pathMatchers(
         "/health/**",
         "/info",
         "/ping",
@@ -32,8 +33,7 @@ class ApplicationSecurityConfiguration {
         "/hearing/delete-duplicates",
       ).permitAll()
         .anyExchange().hasAnyRole("PREPARE_A_CASE", "SAR_DATA_ACCESS")
-    }.oauth2Login(Customizer.withDefaults())
-    .oauth2Client(Customizer.withDefaults())
+    }
     .oauth2ResourceServer { oauth2 ->
       oauth2.jwt { it.jwtAuthenticationConverter(TokenAuthenticationConverter()) }
     }.build()
