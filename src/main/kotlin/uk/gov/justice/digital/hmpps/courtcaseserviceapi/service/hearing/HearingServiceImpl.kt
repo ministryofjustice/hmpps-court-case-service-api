@@ -100,7 +100,7 @@ class HearingServiceImpl(
           )
         } else {
           existingHearing.hearingCaseNote?.isSoftDeleted = true
-          hearingRepository.save(existingHearing).thenReturn(existingHearing.hearingCaseNote?.isSoftDeleted)
+          hearingRepository.save(existingHearing).thenReturn(existingHearing.hearingCaseNote?.isSoftDeleted ?: true)
         }
       }
   }
