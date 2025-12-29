@@ -22,9 +22,10 @@ CREATE TABLE IF NOT EXISTS offence(
 CREATE TABLE IF NOT EXISTS offender(
     id UUID DEFAULT uuidv7() PRIMARY KEY,
     legacy_id INT,
-    crn TEXT,
+    crn TEXT UNIQUE,
     cro TEXT,
-    is_suspend_sentence_order BOOLEAN DEFAULT false NOT NULL,
+    pnc TEXT,
+    is_suspended_sentence_order BOOLEAN DEFAULT false NOT NULL,
     is_breach BOOLEAN DEFAULT false NOT NULL,
     is_awaiting_psr BOOLEAN,
     is_pre_sentence_activity BOOLEAN DEFAULT false NOT NULL,
@@ -55,6 +56,7 @@ CREATE TABLE IF NOT EXISTS prosecution_case(
 CREATE TABLE IF NOT EXISTS hearing(
     id UUID DEFAULT uuidv7() PRIMARY KEY,
     legacy_id INT,
+    hearing_id UUID,
     type TEXT,
     event_type TEXT,
     list_number TEXT,
