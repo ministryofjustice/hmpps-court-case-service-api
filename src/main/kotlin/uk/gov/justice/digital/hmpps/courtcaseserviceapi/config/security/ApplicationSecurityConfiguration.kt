@@ -16,26 +16,25 @@ import org.springframework.security.web.server.util.matcher.PathPatternParserSer
 class ApplicationSecurityConfiguration {
 
   @Bean
-  fun apiHttpSecurity(http: ServerHttpSecurity): SecurityWebFilterChain {
-    return http.securityMatcher(PathPatternParserServerWebExchangeMatcher("/**"))
-      .sessionManagement { SessionCreationPolicy.STATELESS }
-      .csrf { it.disable() }
-      .authorizeExchange { it.pathMatchers(
-          "/health/**",
-          "/info",
-          "/ping",
-          "/swagger-ui.html",
-          "/swagger-ui/**",
-          "/v3/api-docs/**",
-          "/queue-admin/retry-all-dlqs",
-          "/process-un-resulted-cases",
-          "/hearing/delete-duplicates",
-        ).permitAll()
+  fun apiHttpSecurity(http: ServerHttpSecurity): SecurityWebFilterChain = http.securityMatcher(PathPatternParserServerWebExchangeMatcher("/**"))
+    .sessionManagement { SessionCreationPolicy.STATELESS }
+    .csrf { it.disable() }
+    .authorizeExchange {
+      it.pathMatchers(
+        "/health/**",
+        "/info",
+        "/ping",
+        "/swagger-ui.html",
+        "/swagger-ui/**",
+        "/v3/api-docs/**",
+        "/queue-admin/retry-all-dlqs",
+        "/process-un-resulted-cases",
+        "/hearing/delete-duplicates",
+      ).permitAll()
         .anyExchange().hasAnyRole("PREPARE_A_CASE", "SAR_DATA_ACCESS")
-      }.oauth2Login(Customizer.withDefaults())
-      .oauth2Client(Customizer.withDefaults())
-      .oauth2ResourceServer { oauth2 ->
-        oauth2.jwt { it.jwtAuthenticationConverter(TokenAuthenticationConverter()) }
-      }.build()
-  }
+    }.oauth2Login(Customizer.withDefaults())
+    .oauth2Client(Customizer.withDefaults())
+    .oauth2ResourceServer { oauth2 ->
+      oauth2.jwt { it.jwtAuthenticationConverter(TokenAuthenticationConverter()) }
+    }.build()
 }
