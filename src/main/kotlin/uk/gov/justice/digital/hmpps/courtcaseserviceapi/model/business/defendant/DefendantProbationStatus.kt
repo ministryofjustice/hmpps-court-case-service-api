@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonValue
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-enum class DefendantProbationStatus(val status: String) {
+enum class DefendantProbationStatus(private val status: String) {
   CURRENT("Current"),
   PREVIOUSLY_KNOWN("Previously known"),
   NOT_SENTENCED("Pre-sentence record"),
