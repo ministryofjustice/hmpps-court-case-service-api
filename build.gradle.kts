@@ -32,8 +32,8 @@ dependencies {
   testImplementation("io.swagger.parser.v3:swagger-parser:2.1.35") {
     exclude(group = "io.swagger.core.v3")
   }
-  testImplementation("org.springframework.boot:spring-boot-starter-data-r2dbc-test")
-  testImplementation("org.springframework.boot:spring-boot-starter-security-test")
+  testImplementation("org.springframework.boot:spring-boot-starter-data-r2dbc-test:4.0.1")
+  testImplementation("org.springframework.boot:spring-boot-starter-security-test:7.0.2")
   testImplementation("org.mockito.kotlin:mockito-kotlin:6.1.0")
   testImplementation("org.wiremock:wiremock-standalone:3.13.1")
   testImplementation("org.testcontainers:postgresql:1.21.3")
