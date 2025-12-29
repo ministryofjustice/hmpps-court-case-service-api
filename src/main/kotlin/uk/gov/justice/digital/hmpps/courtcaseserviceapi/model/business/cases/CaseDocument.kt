@@ -23,6 +23,4 @@ data class CaseDocument(
   val isSoftDeleted: Boolean? = null,
   @JsonProperty("version")
   val version: Int? = null,
-) {
-  constructor() : this(null, null, null, null, null, null, null, null, null)
-}
+)
