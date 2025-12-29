@@ -32,10 +32,10 @@ class FeatureFlagServiceTest {
     val context = mapOf("user" to "test-user")
     val expectedResponse = FeatureFlagResponse(enabled = true)
     val request = FeatureFlagRequest(
-        namespace = "ProbationInCourt",
-        entityId = flagKey,
-        flagKey = flagKey,
-        context = context,
+      namespace = "ProbationInCourt",
+      entityId = flagKey,
+      flagKey = flagKey,
+      context = context,
     )
 
     Mockito.`when`(featureFlagClient.getFeatureFlags(request)).thenReturn(Mono.just(expectedResponse))
@@ -50,10 +50,10 @@ class FeatureFlagServiceTest {
     val flagKey = "test-flag"
     val expectedResponse = FeatureFlagResponse(enabled = false)
     val request = FeatureFlagRequest(
-        namespace = "ProbationInCourt",
-        entityId = flagKey,
-        flagKey = flagKey,
-        context = null,
+      namespace = "ProbationInCourt",
+      entityId = flagKey,
+      flagKey = flagKey,
+      context = null,
     )
 
     Mockito.`when`(featureFlagClient.getFeatureFlags(request)).thenReturn(Mono.just(expectedResponse))
