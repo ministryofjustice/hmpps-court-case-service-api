@@ -1,10 +1,10 @@
-package uk.gov.justice.digital.hmpps.courtcaseserviceapi.service
+package uk.gov.justice.digital.hmpps.courtcaseserviceapi.service.featureflag
 
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.Mock
-import org.mockito.Mockito.`when`
+import org.mockito.Mockito
 import org.mockito.junit.jupiter.MockitoExtension
 import org.springframework.test.context.ActiveProfiles
 import reactor.core.publisher.Mono
@@ -32,13 +32,13 @@ class FeatureFlagServiceTest {
     val context = mapOf("user" to "test-user")
     val expectedResponse = FeatureFlagResponse(enabled = true)
     val request = FeatureFlagRequest(
-      namespace = "ProbationInCourt",
-      entityId = flagKey,
-      flagKey = flagKey,
-      context = context,
+        namespace = "ProbationInCourt",
+        entityId = flagKey,
+        flagKey = flagKey,
+        context = context,
     )
 
-    `when`(featureFlagClient.getFeatureFlags(request)).thenReturn(Mono.just(expectedResponse))
+    Mockito.`when`(featureFlagClient.getFeatureFlags(request)).thenReturn(Mono.just(expectedResponse))
 
     val result = service.isFeatureEnabled(flagKey, context).block()
 
@@ -50,13 +50,13 @@ class FeatureFlagServiceTest {
     val flagKey = "test-flag"
     val expectedResponse = FeatureFlagResponse(enabled = false)
     val request = FeatureFlagRequest(
-      namespace = "ProbationInCourt",
-      entityId = flagKey,
-      flagKey = flagKey,
-      context = null,
+        namespace = "ProbationInCourt",
+        entityId = flagKey,
+        flagKey = flagKey,
+        context = null,
     )
 
-    `when`(featureFlagClient.getFeatureFlags(request)).thenReturn(Mono.just(expectedResponse))
+    Mockito.`when`(featureFlagClient.getFeatureFlags(request)).thenReturn(Mono.just(expectedResponse))
 
     val result = service.isFeatureEnabled(flagKey).block()
 

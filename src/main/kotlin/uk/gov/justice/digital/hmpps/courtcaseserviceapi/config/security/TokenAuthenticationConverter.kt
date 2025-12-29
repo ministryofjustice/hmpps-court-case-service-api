@@ -7,11 +7,9 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.oauth2.jwt.Jwt
 import reactor.core.publisher.Mono
 
-class TokenAuthenticationConverter: Converter<Jwt, Mono<AbstractAuthenticationToken>> {
+class TokenAuthenticationConverter : Converter<Jwt, Mono<AbstractAuthenticationToken>> {
 
-  override fun convert(jwtToken: Jwt): Mono<AbstractAuthenticationToken> {
-    return Mono.just(jwtToken).map(this::doConversion)
-  }
+  override fun convert(jwtToken: Jwt): Mono<AbstractAuthenticationToken> = Mono.just(jwtToken).map(this::doConversion)
 
   private fun doConversion(jwtToken: Jwt): AbstractAuthenticationToken {
     val clientId = jwtToken.claims["client_id"]

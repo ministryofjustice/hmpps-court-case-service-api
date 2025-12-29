@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.courtcaseserviceapi.service
+package uk.gov.justice.digital.hmpps.courtcaseserviceapi.service.featureflag
 
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
