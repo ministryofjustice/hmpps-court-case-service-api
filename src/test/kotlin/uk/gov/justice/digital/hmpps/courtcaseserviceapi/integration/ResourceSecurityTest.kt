@@ -40,7 +40,7 @@ class ResourceSecurityTest : IntegrationTestBase() {
       handlerMethods.forEach { (mappingInfo, method) ->
         val classAnnotation = method.beanType.getAnnotation(PreAuthorize::class.java)
         val methodAnnotation = method.getMethodAnnotation(PreAuthorize::class.java)
-        if (classAnnotation != null && methodAnnotation != null) {
+        if (classAnnotation == null && methodAnnotation == null) {
           mappingInfo.directPaths.forEach { pattern ->
             assertThat(exclusions.contains(pattern)).`as`("Only exclusion '$pattern'")
               .withFailMessage {
