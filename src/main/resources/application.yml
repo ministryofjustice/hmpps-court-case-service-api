@@ -16,6 +16,59 @@ spring:
   security:
     oauth2:
       client:
+        registration:
+          community-api-client:
+            client-name: community-api-client
+            client-id: ${community-api-client-id:community-api-client}
+            client-secret: ${community-api-client-secret:clientsecret}
+            client-authentication-method: client_secret_basic
+            authorization-grant-type: client_credentials
+            provider: nomis-oauth-service
+          offender-assessments-api-client:
+            client-name: offender-assessments-api-client
+            client-id: ${offender-assessments-api.client-id}
+            client-secret: ${offender-assessments-api.client-secret}
+            client-authentication-method: client_secret_basic
+            authorization-grant-type: client_credentials
+            provider: nomis-oauth-service
+          prison-api-client:
+            client-name: prison-api-client
+            client-id: ${prison-api-client-id:prison-api-client}
+            client-secret: ${prison-api-client-secret:clientsecret}
+            client-authentication-method: client_secret_basic
+            authorization-grant-type: client_credentials
+            provider: nomis-oauth-service
+          manage-offences-api-client:
+            client-name: manage-offences-api-client
+            client-id: ${manage-offences-api-client-id:manage-offences-api-client}
+            client-secret: ${manage-offences-api-client-secret:clientsecret}
+            client-authentication-method: client_secret_basic
+            authorization-grant-type: client_credentials
+            provider: nomis-oauth-service
+          court-case-and-delius-api-client:
+            client-name: court-case-and-delius-api-client
+            client-id: ${court-case-and-delius-api-client-id:court-case-and-delius-api-client}
+            client-secret: ${court-case-and-delius-api-client-secret:clientsecret}
+            client-authentication-method: client_secret_basic
+            authorization-grant-type: client_credentials
+            provider: nomis-oauth-service
+          flipt:
+            base-url: ${flipt-api-url:url}
+            api-key: ${flipt-api-key:api-key}
+          domain-event-and-delius-api-client:
+            client-name: domain-event-and-delius-api-client
+            client-id: ${domain-event-and-delius-api-client-id:domain-event-and-delius-api-client}
+            client-secret: ${domain-event-and-delius-api-client-secret:clientsecret}
+            client-authentication-method: client_secret_basic
+            authorization-grant-type: client_credentials
+            provider: nomis-oauth-service
+          hmpps-document-management-api-client:
+            client-name: hmpps-document-management-api-client
+            client-id: ${hmpps-document-management-api-client:hmpps-document-management-api-client}
+            client-secret: ${hmpps-document-management-api-client-secret:clientsecret}
+            client-authentication-method: client_secret_basic
+            authorization-grant-type: client_credentials
+            provider: nomis-oauth-service
         provider:
           nomis-oauth-service:
             token-uri: ${nomis-oauth.base-url}/oauth/token
