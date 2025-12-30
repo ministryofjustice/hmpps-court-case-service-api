@@ -42,10 +42,10 @@ class ResourceSecurityTest : IntegrationTestBase() {
         val methodAnnotation = method.getMethodAnnotation(PreAuthorize::class.java)
         if (classAnnotation == null && methodAnnotation == null) {
           mappingInfo.directPaths.forEach { pattern ->
-            assertThat(exclusions.contains(pattern)).`as`("Only exclusion '$pattern'")
+            assertThat(exclusions).contains(pattern)
               .withFailMessage {
                 "Found $mappingInfo of type $method with no PreAuthorize annotation"
-              }.isTrue
+              }
           }
         }
       }
