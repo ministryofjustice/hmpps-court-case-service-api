@@ -11,20 +11,10 @@ configurations {
 }
 
 dependencies {
-  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:1.8.2") {
-    exclude(module = "spring-boot-starter-oauth2-resource-server")
-    exclude(module = "spring-boot-starter-oauth2-client")
-    exclude(module = "spring-boot-starter-security")
-  }
-  implementation("org.springframework.boot:spring-boot-starter-security")
-  implementation("org.springframework.security:spring-security-oauth2-resource-server")
+  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:1.8.2")
   implementation("name.nkonev.r2dbc-migrate:r2dbc-migrate-spring-boot-starter:3.3.0")
-  implementation("org.springframework.security:spring-security-oauth2-client")
-  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:5.6.3") {
-    exclude(module = "spring-boot-starter-security")
-  }
-  implementation("org.springframework.security:spring-security-oauth2-jose")
-  implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:3.0.0")
+  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:5.6.3")
+  implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:2.8.14")
   implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
   implementation("org.springframework.boot:spring-boot-starter-webflux")
   implementation("com.fasterxml.uuid:java-uuid-generator:5.2.0")
