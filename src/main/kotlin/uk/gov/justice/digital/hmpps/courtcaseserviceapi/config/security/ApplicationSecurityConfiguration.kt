@@ -12,7 +12,7 @@ import org.springframework.security.web.server.util.matcher.PathPatternParserSer
 
 @Configuration
 @EnableWebFluxSecurity
-@Profile("!unsecured")
+@Profile("secured")
 class ApplicationSecurityConfiguration {
 
   @Bean
