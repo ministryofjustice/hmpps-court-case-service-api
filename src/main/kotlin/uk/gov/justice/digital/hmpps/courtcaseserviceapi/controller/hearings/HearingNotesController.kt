@@ -38,7 +38,7 @@ class HearingNotesController(private val hearingNotesService: HearingNotesServic
     request.createdByUUID = UUIDUtil.uuid(authenticationExtractor.extractAuthUserUuid(principal))
     hearingNotesService.addHearingCaseNoteAsDraft(hearingId, defendantId, request)
   }.map { response -> ResponseEntity.status(CREATED).body(response) }
-    .defaultIfEmpty(ResponseEntity.noContent().build())
+    .defaultIfEmpty(ResponseEntity.badRequest().build())
 
   @PutMapping(
     value = ["/defendant/{defendantId}/notes/draft"],
@@ -61,7 +61,11 @@ class HearingNotesController(private val hearingNotesService: HearingNotesServic
     @PathVariable hearingId: UUID,
     @PathVariable defendantId: UUID,
     @AuthenticationPrincipal principal: Principal,
-  ): Mono<ResponseEntity<Void>> = hearingNotesService.deleteHearingCaseNoteDraft(hearingId, defendantId, UUIDUtil.uuid(authenticationExtractor.extractAuthUserUuid(principal)))
+  ): Mono<ResponseEntity<Void>> = hearingNotesService.deleteHearingCaseNoteDraft(
+    hearingId,
+    defendantId,
+    UUIDUtil.uuid(authenticationExtractor.extractAuthUserUuid(principal)),
+  )
     .filter { bool -> bool }
     .map { _ -> ResponseEntity.ok().build<Void>() }
     .defaultIfEmpty(ResponseEntity.notFound().build())
@@ -90,7 +94,12 @@ class HearingNotesController(private val hearingNotesService: HearingNotesServic
     @PathVariable defendantId: UUID,
     @PathVariable noteId: UUID,
     @AuthenticationPrincipal principal: Principal,
-  ): Mono<ResponseEntity<Void>> = hearingNotesService.deleteHearingCaseNote(hearingId, defendantId, noteId, UUIDUtil.uuid(authenticationExtractor.extractAuthUserUuid(principal)))
+  ): Mono<ResponseEntity<Void>> = hearingNotesService.deleteHearingCaseNote(
+    hearingId,
+    defendantId,
+    noteId,
+    UUIDUtil.uuid(authenticationExtractor.extractAuthUserUuid(principal)),
+  )
     .filter { bool -> bool }
     .map { _ -> ResponseEntity.ok().build<Void>() }
     .defaultIfEmpty(ResponseEntity.notFound().build())

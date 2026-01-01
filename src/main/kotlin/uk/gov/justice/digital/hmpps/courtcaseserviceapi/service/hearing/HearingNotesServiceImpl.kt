@@ -35,9 +35,10 @@ class HearingNotesServiceImpl(
     val hearing = defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId)
     val requestToBusinessNote = convertRequestNoteToBusiness(requestNote)
 
-    log.info("Adding hearing case-note as a draft for hearingId as $hearing and defendantId as $defendantId")
-
     return hearing.switchIfEmpty(Mono.error(HearingNotFoundException(hearingId.toString())))
+      .doOnNext { existingHearing ->
+        log.info("Adding hearing case-note as a draft for hearingId ${existingHearing.id} and defendantId $defendantId")
+      }
       .filter { existingHearing -> existingHearing.hearingCaseNote == null }
       .flatMap { existingHearing ->
         val existingCaseNote = existingHearing.hearingCaseNote
@@ -59,9 +60,12 @@ class HearingNotesServiceImpl(
     val requestToBusinessNote = convertRequestNoteToBusiness(requestNote)
     updateCounter++
 
-    log.info("Updating hearing case-note draft in hearingId $hearingId for defendantId $defendantId")
-
     return hearing.switchIfEmpty(Mono.error(HearingNotFoundException(hearingId.toString())))
+      .doOnNext { existingHearing ->
+        log.info(
+          "Updating hearing case-note draft in hearingId ${existingHearing.id} for defendantId $defendantId",
+        )
+      }
       .filter { existingHearing -> existingHearing.hearingCaseNote != null }
       .filter { existingHearing -> existingHearing.hearingCaseNote?.isSoftDeleted == false && existingHearing.hearingCaseNote?.isDraft == true }
       .flatMap { existingHearing ->
@@ -82,9 +86,10 @@ class HearingNotesServiceImpl(
   ): Mono<Boolean> {
     val hearing = defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId)
 
-    log.info("Deleting HearingCaseNote draft in hearingId $hearingId with user $userUUID for defendantId $defendantId")
-
     return hearing.switchIfEmpty(Mono.error(HearingNotFoundException(hearingId.toString())))
+      .doOnNext { existingHearing ->
+        log.info("Deleting HearingCaseNote draft in hearingId ${existingHearing.id} with user $userUUID for defendantId $defendantId")
+      }
       .filter { existingHearing -> existingHearing.hearingCaseNote != null && existingHearing.hearingCaseNote?.isSoftDeleted == false }
       .filter { existingHearing -> existingHearing.hearingCaseNote?.isDraft == true }
       .flatMap { existingHearing ->
@@ -115,6 +120,9 @@ class HearingNotesServiceImpl(
     val hearing = defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId)
 
     return hearing.switchIfEmpty(Mono.error(HearingNotFoundException(hearingId.toString())))
+      .doOnNext { existingHearing ->
+        log.info("Updating HearingCaseNote in hearingId ${existingHearing.id} with user $noteId for defendantId $defendantId")
+      }
       .filter { existingHearing -> existingHearing.hearingCaseNote != null && existingHearing.hearingCaseNote?.isSoftDeleted == false }
       .filter { existingHearing -> existingHearing.hearingCaseNote?.isDraft == false && existingHearing.hearingCaseNote?.id == noteId }
       .flatMap { existingHearing ->
@@ -160,6 +168,9 @@ class HearingNotesServiceImpl(
     val hearing = defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId)
 
     return hearing.switchIfEmpty(Mono.error(HearingNotFoundException(hearingId.toString())))
+      .doOnNext { existingHearing ->
+        log.info("Deleting HearingCaseNote in hearingId ${existingHearing.id} with user $userUUID for defendantId $defendantId")
+      }
       .filter { existingHearing -> existingHearing.hearingCaseNote != null && existingHearing.hearingCaseNote?.isSoftDeleted == false }
       .filter { existingHearing -> existingHearing.hearingCaseNote?.isDraft == false && existingHearing.hearingCaseNote?.id == noteId }
       .flatMap { existingHearing ->
@@ -186,7 +197,6 @@ class HearingNotesServiceImpl(
     existingHearing: Hearing,
     requestToBusinessNote: HearingCaseNote,
   ): Mono<HearingCaseNoteResponse> {
-    log.info("Saving draft and transform to response for $requestToBusinessNote")
     existingHearing.hearingCaseNote = requestToBusinessNote
     return hearingRepository.save(existingHearing).map { savedHearing -> convertBusinessNoteToResponse(savedHearing.hearingCaseNote) }
   }
@@ -196,8 +206,6 @@ class HearingNotesServiceImpl(
     requestToBusinessNote: HearingCaseNote,
     existingHearing: Hearing,
   ): Mono<HearingCaseNoteResponse> {
-    log.info("Updating hearingCaseNote draft and transform to response for $existingCaseNote")
-
     existingCaseNote?.note = requestToBusinessNote.note
     existingCaseNote?.author = requestToBusinessNote.author
     existingCaseNote?.createdByUUID = requestToBusinessNote.createdByUUID

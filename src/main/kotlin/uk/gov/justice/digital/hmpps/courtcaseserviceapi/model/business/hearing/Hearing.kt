@@ -19,7 +19,7 @@ data class Hearing(
   val listNumber: String?,
   val prepStatus: String?,
   val isHearingOutcomeNotRequired: Boolean?,
-  val firstCreatedAt: OffsetDateTime?,
+  val firstCreated: OffsetDateTime?,
   @Column("hearing_outcome")
   val hearingOutcome: HearingOutcome? = null,
   @Column("hearing_case_note")
