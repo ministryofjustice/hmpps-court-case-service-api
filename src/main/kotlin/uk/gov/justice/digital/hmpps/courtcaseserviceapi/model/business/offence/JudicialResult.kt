@@ -17,3 +17,7 @@ data class JudicialResult(
   val isSoftDeleted: Boolean?,
   val version: Int?,
 )
+
+data class JudicialResultWrapper(
+  var judicialResults: List<JudicialResult>?,
+)

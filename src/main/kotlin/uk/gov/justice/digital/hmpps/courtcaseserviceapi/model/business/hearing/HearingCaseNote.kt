@@ -7,6 +7,10 @@ import java.util.UUID
 data class HearingCaseNote(
   @JsonProperty("id")
   val id: UUID?,
+  @JsonProperty("legacy_id")
+  val legacyId: Int?,
+  @JsonProperty("defendant_id")
+  val defendantId: UUID?,
   @JsonProperty("name")
   var note: String?,
   @JsonProperty("author")
@@ -29,4 +33,8 @@ data class HearingCaseNote(
   var isSoftDeleted: Boolean?,
   @JsonProperty("version")
   var version: Int?,
+)
+
+data class HearingCaseNoteWrapper(
+  var caseNotes: List<HearingCaseNote>? = null,
 )

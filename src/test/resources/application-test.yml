@@ -35,10 +35,6 @@ r2dbc:
 FLIPT_API_KEY: test-api-key
 FLIPT_API_URL: http://localhost:8083
 
-wiremock:
-  server:
-    port: 8089
-
 logging:
   level:
     uk.gov.justice.digital.hmpps.courtcaseserviceapi: DEBUG

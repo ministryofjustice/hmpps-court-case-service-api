@@ -2,10 +2,8 @@ package uk.gov.justice.digital.hmpps.courtcaseserviceapi.data
 
 import com.fasterxml.uuid.Generators
 import uk.gov.justice.digital.hmpps.courtcaseserviceapi.model.api.hearing.HearingCaseNoteRequest
-import uk.gov.justice.digital.hmpps.courtcaseserviceapi.model.api.hearing.HearingCaseNoteResponse
 import uk.gov.justice.digital.hmpps.courtcaseserviceapi.model.business.hearing.Hearing
 import uk.gov.justice.digital.hmpps.courtcaseserviceapi.model.business.hearing.HearingCaseNote
-import uk.gov.justice.digital.hmpps.courtcaseserviceapi.model.business.hearing.HearingOutcome
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.UUID
@@ -14,97 +12,69 @@ object TestDataBuilder {
 
   fun generateUUID(): UUID = Generators.timeBasedEpochGenerator().generate()
 
-  fun createHearingCaseNoteRequest(
+  fun buildHearingCaseNoteRequest(
     note: String? = "Test note",
-    userUUID: UUID? = generateUUID(),
+    createdByUUID: UUID? = generateUUID(),
     author: String = "Test Author",
   ): HearingCaseNoteRequest = HearingCaseNoteRequest(
     note = note,
-    createdByUUID = userUUID,
+    createdByUUID = createdByUUID,
     author = author,
   )
 
-  fun createHearingCaseNote(
-    id: UUID? = generateUUID(),
-    note: String? = "Test hearing case note",
-    author: String? = "Test Author",
-    isDraft: Boolean? = true,
-    isLegacy: Boolean? = false,
+  fun buildHearingCaseNote(
+    id: UUID = generateUUID(),
+    defendantId: UUID = generateUUID(),
+    note: String? = "Test note",
+    author: String = "Test Author",
+    isDraft: Boolean = true,
+    isLegacy: Boolean = false,
     createdByUUID: UUID? = generateUUID(),
-    createdAt: OffsetDateTime? = OffsetDateTime.now(ZoneOffset.UTC),
-    createdBy: String? = "Test Author",
-    updatedAt: OffsetDateTime? = null,
-    updatedBy: String? = null,
-    isSoftDeleted: Boolean? = false,
-    version: Int? = 0,
+    createdAt: OffsetDateTime = OffsetDateTime.now(ZoneOffset.UTC),
+    isSoftDeleted: Boolean = false,
+    version: Int = 0,
   ): HearingCaseNote = HearingCaseNote(
     id = id,
+    legacyId = null,
+    defendantId = defendantId,
     note = note,
     author = author,
     isDraft = isDraft,
     isLegacy = isLegacy,
     createdByUUID = createdByUUID,
     createdAt = createdAt,
-    createdBy = createdBy,
-    updatedAt = updatedAt,
-    updatedBy = updatedBy,
+    createdBy = author,
+    updatedAt = null,
+    updatedBy = null,
     isSoftDeleted = isSoftDeleted,
     version = version,
   )
 
-  fun createHearing(
-    id: UUID? = generateUUID(),
-    hearingID: UUID = generateUUID(),
-    legacyID: Int? = 12345,
-    type: String? = "Trial",
-    eventType: String? = "Sentence",
-    listNumber: String? = "List-001",
-    prepStatus: String? = "Prepared",
-    isHearingOutcomeNotRequired: Boolean? = false,
-    firstCreated: OffsetDateTime? = OffsetDateTime.now(ZoneOffset.UTC),
-    hearingOutcome: HearingOutcome? = null,
-    hearingCaseNote: HearingCaseNote? = null,
-    createdAt: OffsetDateTime? = OffsetDateTime.now(ZoneOffset.UTC),
-    createdBy: String? = "Test User",
-    updatedAt: OffsetDateTime? = null,
-    updatedBy: String? = null,
-    isSoftDeleted: Boolean? = false,
-    version: Int? = 1,
+  fun buildHearing(
+    id: UUID = generateUUID(),
+    hearingId: UUID = generateUUID(),
+    type: String? = "Test Type",
+    hearingCaseNote: List<HearingCaseNote>? = null,
+    createdAt: OffsetDateTime = OffsetDateTime.now(ZoneOffset.UTC),
+    isSoftDeleted: Boolean = false,
+    version: Int = 0,
   ): Hearing = Hearing(
     id = id,
-    hearingID = hearingID,
-    legacyID = legacyID,
+    legacyId = null,
+    hearingId = hearingId,
     type = type,
-    eventType = eventType,
-    listNumber = listNumber,
-    prepStatus = prepStatus,
-    isHearingOutcomeNotRequired = isHearingOutcomeNotRequired,
-    firstCreated = firstCreated,
-    hearingOutcome = hearingOutcome,
+    eventType = "Test Event",
+    listNumber = "1",
+    prepStatus = "PREPARED",
+    isHearingOutcomeNotRequired = false,
+    firstCreated = createdAt,
+    hearingOutcome = null,
     hearingCaseNote = hearingCaseNote,
     createdAt = createdAt,
-    createdBy = createdBy,
-    updatedAt = updatedAt,
-    updatedBy = updatedBy,
+    createdBy = "Test User",
+    updatedAt = null,
+    updatedBy = null,
     isSoftDeleted = isSoftDeleted,
     version = version,
-  )
-
-  fun createHearingCaseNoteResponse(
-    noteId: UUID? = generateUUID(),
-    note: String? = "Test note",
-    createdAt: OffsetDateTime? = OffsetDateTime.now(ZoneOffset.UTC),
-    author: String? = "Test Author",
-    createdByUuid: UUID? = generateUUID(),
-    isDraft: Boolean? = true,
-    isLegacy: Boolean? = false,
-  ): HearingCaseNoteResponse = HearingCaseNoteResponse(
-    noteId = noteId,
-    note = note,
-    createdAt = createdAt,
-    author = author,
-    createdByUuid = createdByUuid,
-    isDraft = isDraft,
-    isLegacy = isLegacy,
   )
 }

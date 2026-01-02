@@ -14,3 +14,7 @@ data class Verdict(
   val isSoftDeleted: Boolean?,
   val version: Int?,
 )
+
+data class VerdictWrapper(
+  var verdicts: List<Verdict>? = null,
+)

@@ -15,3 +15,7 @@ data class CaseMarker(
   val isSoftDeleted: Boolean?,
   val version: Int?,
 )
+
+data class CaseMarkerWrapper(
+  var caseMarkers: List<CaseMarker>?,
+)

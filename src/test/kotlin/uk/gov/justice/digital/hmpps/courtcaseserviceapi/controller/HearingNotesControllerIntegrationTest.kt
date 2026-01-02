@@ -1,17 +1,8 @@
 package uk.gov.justice.digital.hmpps.courtcaseserviceapi.controller
 
-import com.github.tomakehurst.wiremock.WireMockServer
-import com.github.tomakehurst.wiremock.client.WireMock.aResponse
-import com.github.tomakehurst.wiremock.client.WireMock.configureFor
-import com.github.tomakehurst.wiremock.client.WireMock.get
-import com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration
 import org.assertj.core.api.AssertionsForInterfaceTypes.assertThat
-import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.mockito.kotlin.any
@@ -20,159 +11,208 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
-import org.springframework.security.oauth2.jwt.Jwt
-import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockAuthentication
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
-import reactor.core.publisher.Mono
-import uk.gov.justice.digital.hmpps.courtcaseserviceapi.config.security.JwtTokenAuthenticationImpl
-import uk.gov.justice.digital.hmpps.courtcaseserviceapi.data.HearingNotesTestDataHelper
+import reactor.test.StepVerifier
+import uk.gov.justice.digital.hmpps.courtcaseserviceapi.config.security.AuthenticationExtractor
+import uk.gov.justice.digital.hmpps.courtcaseserviceapi.data.ApiTestDataBuilder
+import uk.gov.justice.digital.hmpps.courtcaseserviceapi.data.ApiTestDataBuilder.generateUUID
+import uk.gov.justice.digital.hmpps.courtcaseserviceapi.model.api.hearing.HearingCaseNoteRequest
 import uk.gov.justice.digital.hmpps.courtcaseserviceapi.model.api.hearing.HearingCaseNoteResponse
-import uk.gov.justice.digital.hmpps.courtcaseserviceapi.model.business.hearing.Hearing
 import uk.gov.justice.digital.hmpps.courtcaseserviceapi.repository.common.DefendantHearingRepository
 import uk.gov.justice.digital.hmpps.courtcaseserviceapi.repository.hearing.HearingRepository
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient
-@ActiveProfiles("test")
+@ActiveProfiles("test", "secured")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class HearingNotesControllerIntegrationTest {
 
   @Autowired
-  private lateinit var webTestClient: WebTestClient
+  lateinit var webTestClient: WebTestClient
+
+  @Autowired
+  lateinit var hearingRepository: HearingRepository
+
+  @Autowired
+  lateinit var defendantHearingRepository: DefendantHearingRepository
 
   @MockitoBean
-  private lateinit var defendantHearingRepository: DefendantHearingRepository
+  lateinit var authenticationExtractor: AuthenticationExtractor
 
-  @MockitoBean
-  private lateinit var hearingRepository: HearingRepository
-
-  private lateinit var wireMockServer: WireMockServer
-
-  @BeforeAll
-  fun setupWireMock() {
-    wireMockServer = WireMockServer(WireMockConfiguration.options().port(8089))
-    wireMockServer.start()
-    configureFor("localhost", 8089)
-  }
-
-  @AfterAll
-  fun tearDownWireMock() {
-    wireMockServer.stop()
-  }
+  private val hearingId = generateUUID()
+  private val defendantId = generateUUID()
+  private val userUuid = generateUUID()
+  private val noteId = generateUUID()
 
   @BeforeEach
-  fun resetWireMock() {
-    wireMockServer.resetAll()
+  fun setup() {
+    StepVerifier.create(hearingRepository.deleteAll())
+      .verifyComplete()
+
+    val hearing = ApiTestDataBuilder.buildHearing(
+      id = hearingId,
+      hearingId = hearingId,
+      defendantId = defendantId,
+    )
+
+    StepVerifier.create(hearingRepository.save(hearing))
+      .expectNextCount(1)
+      .verifyComplete()
+
+    whenever(authenticationExtractor.extractAuthUserUuid(any())).thenReturn(userUuid.toString())
+  }
+
+  @AfterEach
+  fun cleanup() {
+    StepVerifier.create(hearingRepository.deleteAll())
+      .verifyComplete()
   }
 
   @Test
-  @DisplayName("Should successfully add hearing case note as draft")
-  fun testAddHearingCaseNoteAsDraft() {
-    val hearingId = HearingNotesTestDataHelper.TEST_HEARING_ID
-    val defendantId = HearingNotesTestDataHelper.TEST_DEFENDANT_ID
-    val request = HearingNotesTestDataHelper.createHearingCaseNoteRequest()
+  fun `should add hearing case note as draft successfully`() {
+    val request = HearingCaseNoteRequest(
+      note = "Test draft note",
+      createdByUUID = null,
+      author = "Test Author",
+    )
 
-    val auth = mockJwtAuthentication()
-
-    val existingHearing = HearingNotesTestDataHelper.createHearingWithoutNote(hearingId)
-    val savedHearing = HearingNotesTestDataHelper.createHearingWithDraftNote(hearingId)
-
-    whenever(defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId))
-      .thenReturn(Mono.just(existingHearing))
-    whenever(hearingRepository.save(any<Hearing>()))
-      .thenReturn(Mono.just(savedHearing))
-
-    stubAuthServiceValidation()
-
-    webTestClient
-      .mutateWith(mockAuthentication(auth))
-      .post()
+    webTestClient.post()
       .uri("/hearing/$hearingId/defendant/$defendantId/note")
+      .headers { it.setBearerAuth(generateMockJwt()) }
       .contentType(MediaType.APPLICATION_JSON)
       .bodyValue(request)
       .exchange()
       .expectStatus().isCreated
       .expectBody<HearingCaseNoteResponse>()
-      .value { response ->
-        assertThat(response.noteId).isNotNull
-        assertThat(request.note).isEqualTo(response.note)
-        assertThat(request.author).isEqualTo(response.author)
-        assertThat(response.isDraft).isTrue
+      .consumeWith { response ->
+        val body = response.responseBody
+        assertThat(body).isNotNull
+        assertThat(body?.noteId).isNotNull()
+        assertThat(body?.note).isEqualTo("Test draft note")
+        assertThat(body?.author).isEqualTo("Test Author")
+        assertThat(body?.createdByUuid).isEqualTo(userUuid)
+        assertThat(body?.isDraft).isTrue()
+        assertThat(body?.isLegacy).isFalse()
+      }
+
+    StepVerifier.create(
+      defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId),
+    )
+      .assertNext { hearing ->
+        assertThat(hearing.hearingCaseNote).isNotNull
+        assertThat(hearing.hearingCaseNote).hasSize(1)
+        val note = hearing.hearingCaseNote?.first()
+        assertThat(note?.note).isEqualTo("Test draft note")
+        assertThat(note?.author).isEqualTo("Test Author")
+        assertThat(note?.isDraft).isTrue()
+        assertThat(note?.createdByUUID).isEqualTo(userUuid)
+      }
+      .verifyComplete()
+  }
+
+  @Test
+  fun `should return existing draft note when duplicate draft is submitted`() {
+    val existingNoteId = generateUUID()
+    val hearing = ApiTestDataBuilder.buildHearingWithDraftNote(
+      id = hearingId,
+      hearingId = hearingId,
+      defendantId = defendantId,
+      noteId = existingNoteId,
+      note = "Existing draft",
+      author = "Test Author",
+      createdByUuid = userUuid,
+    )
+
+    StepVerifier.create(hearingRepository.save(hearing))
+      .expectNextCount(1)
+      .verifyComplete()
+
+    val request = HearingCaseNoteRequest(
+      note = "New draft note",
+      createdByUUID = null,
+      author = "Test Author",
+    )
+
+    webTestClient.post()
+      .uri("/hearing/$hearingId/defendant/$defendantId/note")
+      .headers { it.setBearerAuth(generateMockJwt()) }
+      .contentType(MediaType.APPLICATION_JSON)
+      .bodyValue(request)
+      .exchange()
+      .expectStatus().isCreated
+      .expectBody<HearingCaseNoteResponse>()
+      .consumeWith { response ->
+        val body = response.responseBody
+        assertThat(body?.noteId).isEqualTo(existingNoteId)
+        assertThat(body?.note).isEqualTo("Existing draft")
       }
   }
 
   @Test
-  @Disabled("To be fixed by adding in request level validation")
-  @DisplayName("Should return no content when request note is empty")
-  fun testAddHearingCaseNoteAsDraft_EmptyRequest() {
-    val hearingId = HearingNotesTestDataHelper.TEST_HEARING_ID
-    val defendantId = HearingNotesTestDataHelper.TEST_DEFENDANT_ID
-    val auth = mockJwtAuthentication()
+  fun `should update hearing case note draft successfully`() {
+    val existingNoteId = generateUUID()
+    val hearing = ApiTestDataBuilder.buildHearingWithDraftNote(
+      id = hearingId,
+      hearingId = hearingId,
+      defendantId = defendantId,
+      noteId = existingNoteId,
+      note = "Original draft",
+      author = "Original Author",
+      createdByUuid = userUuid,
+    )
 
-    webTestClient
-      .mutateWith(mockAuthentication(auth))
-      .post()
-      .uri("/hearing/$hearingId/defendant/$defendantId/note")
-      .contentType(MediaType.APPLICATION_JSON)
-      .bodyValue("{}")
-      .exchange()
-      .expectStatus().is4xxClientError
-  }
+    StepVerifier.create(hearingRepository.save(hearing))
+      .expectNextCount(1)
+      .verifyComplete()
 
-  @Test
-  @DisplayName("Should successfully update hearing case note draft")
-  fun testUpdateHearingCaseNoteDraft() {
-    val hearingId = HearingNotesTestDataHelper.TEST_HEARING_ID
-    val defendantId = HearingNotesTestDataHelper.TEST_DEFENDANT_ID
-    val request = HearingNotesTestDataHelper.createUpdatedHearingCaseNoteRequest()
+    val request = HearingCaseNoteRequest(
+      note = "Updated draft note",
+      createdByUUID = null,
+      author = "Updated Author",
+    )
 
-    val existingHearing = HearingNotesTestDataHelper.createHearingWithDraftNote(hearingId)
-    val updatedHearing = HearingNotesTestDataHelper.createHearingWithUpdatedDraftNote(hearingId)
-    val auth = mockJwtAuthentication()
-
-    whenever(defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId))
-      .thenReturn(Mono.just(existingHearing))
-    whenever(hearingRepository.save(any<Hearing>()))
-      .thenReturn(Mono.just(updatedHearing))
-
-    stubAuthServiceValidation()
-
-    webTestClient
-      .mutateWith(mockAuthentication(auth))
-      .put()
+    webTestClient.put()
       .uri("/hearing/$hearingId/defendant/$defendantId/notes/draft")
+      .headers { it.setBearerAuth(generateMockJwt()) }
       .contentType(MediaType.APPLICATION_JSON)
       .bodyValue(request)
       .exchange()
       .expectStatus().isOk
       .expectBody<HearingCaseNoteResponse>()
-      .value { response ->
-        assertThat(response.noteId).isNotNull
-        assertThat(request.note).isEqualTo(response.note)
-        assertThat(response.isDraft).isTrue
+      .consumeWith { response ->
+        val body = response.responseBody
+        assertThat(body).isNotNull
+        assertThat(body?.note).isEqualTo("Updated draft note")
+        assertThat(body?.author).isEqualTo("Updated Author")
+        assertThat(body?.isDraft).isTrue()
       }
+
+    StepVerifier.create(
+      defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId),
+    )
+      .assertNext { updatedHearing ->
+        val note = updatedHearing.hearingCaseNote?.first()
+        assertThat(note?.note).isEqualTo("Updated draft note")
+        assertThat(note?.author).isEqualTo("Updated Author")
+        assertThat(note?.updatedAt).isNotNull()
+      }
+      .verifyComplete()
   }
 
   @Test
-  @DisplayName("Should return not found when draft note does not exist")
-  fun testUpdateHearingCaseNoteDraft_NotFound() {
-    val hearingId = HearingNotesTestDataHelper.TEST_HEARING_ID
-    val defendantId = HearingNotesTestDataHelper.TEST_DEFENDANT_ID
-    val request = HearingNotesTestDataHelper.createHearingCaseNoteRequest()
+  fun `should return not found when updating non-existent draft note`() {
+    val request = HearingCaseNoteRequest(
+      note = "Updated note",
+      createdByUUID = null,
+      author = "Test Author",
+    )
 
-    val existingHearing = HearingNotesTestDataHelper.createHearingWithoutNote(hearingId)
-    val auth = mockJwtAuthentication()
-
-    whenever(defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId))
-      .thenReturn(Mono.just(existingHearing))
-
-    webTestClient
-      .mutateWith(mockAuthentication(auth))
-      .put()
+    webTestClient.put()
       .uri("/hearing/$hearingId/defendant/$defendantId/notes/draft")
+      .headers { it.setBearerAuth(generateMockJwt()) }
       .contentType(MediaType.APPLICATION_JSON)
       .bodyValue(request)
       .exchange()
@@ -180,169 +220,168 @@ class HearingNotesControllerIntegrationTest {
   }
 
   @Test
-  @DisplayName("Should successfully delete hearing case note draft")
-  fun testDeleteHearingCaseNoteDraft() {
-    val hearingId = HearingNotesTestDataHelper.TEST_HEARING_ID
-    val defendantId = HearingNotesTestDataHelper.TEST_DEFENDANT_ID
+  fun `should delete hearing case note draft successfully`() {
+    val existingNoteId = generateUUID()
+    val hearing = ApiTestDataBuilder.buildHearingWithDraftNote(
+      id = hearingId,
+      hearingId = hearingId,
+      defendantId = defendantId,
+      noteId = existingNoteId,
+      note = "Draft to delete",
+      author = "Test Author",
+      createdByUuid = userUuid,
+    )
 
-    val existingHearing = HearingNotesTestDataHelper.createHearingWithDraftNote(hearingId)
-    val deletedHearing = HearingNotesTestDataHelper.createHearingWithDeletedDraftNote(hearingId)
-    val auth = mockJwtAuthentication()
+    StepVerifier.create(hearingRepository.save(hearing))
+      .expectNextCount(1)
+      .verifyComplete()
 
-    whenever(defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId))
-      .thenReturn(Mono.just(existingHearing))
-    whenever(hearingRepository.save(any<Hearing>()))
-      .thenReturn(Mono.just(deletedHearing))
-
-    stubAuthServiceValidation()
-
-    webTestClient
-      .mutateWith(mockAuthentication(auth))
-      .delete()
+    webTestClient.delete()
       .uri("/hearing/$hearingId/defendant/$defendantId/notes/draft")
+      .headers { it.setBearerAuth(generateMockJwt()) }
       .exchange()
       .expectStatus().isOk
+
+    StepVerifier.create(
+      defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId),
+    )
+      .assertNext { updatedHearing ->
+        val note = updatedHearing.hearingCaseNote?.first()
+        assertThat(note?.isSoftDeleted).isTrue()
+      }
+      .verifyComplete()
   }
 
   @Test
-  @DisplayName("Should return not found when deleting non-existent draft")
-  fun testDeleteHearingCaseNoteDraft_NotFound() {
-    val hearingId = HearingNotesTestDataHelper.TEST_HEARING_ID
-    val defendantId = HearingNotesTestDataHelper.TEST_DEFENDANT_ID
-
-    val existingHearing = HearingNotesTestDataHelper.createHearingWithoutNote(hearingId)
-    val auth = mockJwtAuthentication()
-
-    whenever(defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId))
-      .thenReturn(Mono.just(existingHearing))
-
-    webTestClient
-      .mutateWith(mockAuthentication(auth))
-      .delete()
+  fun `should return not found when deleting non-existent draft note`() {
+    webTestClient.delete()
       .uri("/hearing/$hearingId/defendant/$defendantId/notes/draft")
+      .headers { it.setBearerAuth(generateMockJwt()) }
       .exchange()
       .expectStatus().isNotFound
   }
 
   @Test
-  @DisplayName("Should successfully update hearing case note")
-  fun testUpdateHearingCaseNote() {
-    val hearingId = HearingNotesTestDataHelper.TEST_HEARING_ID
-    val defendantId = HearingNotesTestDataHelper.TEST_DEFENDANT_ID
-    val noteId = HearingNotesTestDataHelper.TEST_NOTE_ID
-    val request = HearingNotesTestDataHelper.createUpdatedHearingCaseNoteRequest()
+  fun `should update hearing case note successfully`() {
+    val existingNoteId = generateUUID()
+    val hearing = ApiTestDataBuilder.buildHearingWithPublishedNote(
+      id = hearingId,
+      hearingId = hearingId,
+      defendantId = defendantId,
+      noteId = existingNoteId,
+      note = "Original published note",
+      author = "Original Author",
+      createdByUuid = userUuid,
+    )
 
-    val existingHearing = HearingNotesTestDataHelper.createHearingWithPublishedNote(hearingId, noteId)
-    val updatedHearing = HearingNotesTestDataHelper.createHearingWithUpdatedPublishedNote(hearingId, noteId)
-    val auth = mockJwtAuthentication()
+    StepVerifier.create(hearingRepository.save(hearing))
+      .expectNextCount(1)
+      .verifyComplete()
 
-    whenever(defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId))
-      .thenReturn(Mono.just(existingHearing))
-    whenever(hearingRepository.save(any<Hearing>()))
-      .thenReturn(Mono.just(updatedHearing))
+    val request = HearingCaseNoteRequest(
+      note = "Updated published note",
+      createdByUUID = null,
+      author = "Updated Author",
+    )
 
-    stubAuthServiceValidation()
-
-    webTestClient
-      .mutateWith(mockAuthentication(auth))
-      .put()
-      .uri("/hearing/$hearingId/defendants/$defendantId/notes/$noteId")
+    webTestClient.put()
+      .uri("/hearing/$hearingId/defendants/$defendantId/notes/$existingNoteId")
+      .headers { it.setBearerAuth(generateMockJwt()) }
       .contentType(MediaType.APPLICATION_JSON)
       .bodyValue(request)
       .exchange()
       .expectStatus().isOk
+
+    StepVerifier.create(
+      defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId),
+    )
+      .assertNext { updatedHearing ->
+        val note = updatedHearing.hearingCaseNote?.first()
+        assertThat(note?.note).isEqualTo("Updated published note")
+        assertThat(note?.author).isEqualTo("Updated Author")
+        assertThat(note?.updatedAt).isNotNull()
+        assertThat(note?.updatedBy).isEqualTo("Updated Author")
+        assertThat(note?.version).isEqualTo(1)
+      }
+      .verifyComplete()
   }
 
   @Test
-  @DisplayName("Should successfully delete hearing case note")
-  fun testDeleteHearingCaseNote() {
-    val hearingId = HearingNotesTestDataHelper.TEST_HEARING_ID
-    val defendantId = HearingNotesTestDataHelper.TEST_DEFENDANT_ID
-    val noteId = HearingNotesTestDataHelper.TEST_NOTE_ID
+  fun `should return not found when updating non-existent published note`() {
+    val request = HearingCaseNoteRequest(
+      note = "Updated note",
+      createdByUUID = null,
+      author = "Test Author",
+    )
 
-    val existingHearing = HearingNotesTestDataHelper.createHearingWithPublishedNote(hearingId, noteId)
-    val deletedHearing = HearingNotesTestDataHelper.createHearingWithDeletedPublishedNote(hearingId, noteId)
-    val auth = mockJwtAuthentication()
-
-    whenever(defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId))
-      .thenReturn(Mono.just(existingHearing))
-    whenever(hearingRepository.save(any<Hearing>()))
-      .thenReturn(Mono.just(deletedHearing))
-
-    stubAuthServiceValidation()
-
-    webTestClient
-      .mutateWith(mockAuthentication(auth))
-      .delete()
+    webTestClient.put()
       .uri("/hearing/$hearingId/defendants/$defendantId/notes/$noteId")
+      .headers { it.setBearerAuth(generateMockJwt()) }
+      .contentType(MediaType.APPLICATION_JSON)
+      .bodyValue(request)
+      .exchange()
+      .expectStatus().isNotFound
+  }
+
+  @Test
+  fun `should delete hearing case note successfully`() {
+    val existingNoteId = generateUUID()
+    val hearing = ApiTestDataBuilder.buildHearingWithPublishedNote(
+      id = hearingId,
+      hearingId = hearingId,
+      defendantId = defendantId,
+      noteId = existingNoteId,
+      note = "Published note to delete",
+      author = "Test Author",
+      createdByUuid = userUuid,
+    )
+
+    StepVerifier.create(hearingRepository.save(hearing))
+      .expectNextCount(1)
+      .verifyComplete()
+
+    webTestClient.delete()
+      .uri("/hearing/$hearingId/defendants/$defendantId/notes/$existingNoteId")
+      .headers { it.setBearerAuth(generateMockJwt()) }
       .exchange()
       .expectStatus().isOk
+
+    StepVerifier.create(
+      defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId),
+    )
+      .assertNext { updatedHearing ->
+        val note = updatedHearing.hearingCaseNote?.first()
+        assertThat(note?.isSoftDeleted).isTrue()
+      }
+      .verifyComplete()
   }
 
   @Test
-  @DisplayName("Should return not found when deleting note with wrong user")
-  fun testDeleteHearingCaseNote_WrongUser() {
-    val hearingId = HearingNotesTestDataHelper.TEST_HEARING_ID
-    val defendantId = HearingNotesTestDataHelper.TEST_DEFENDANT_ID
-    val noteId = HearingNotesTestDataHelper.TEST_NOTE_ID
-
-    val existingHearing = HearingNotesTestDataHelper.createHearingWithPublishedNote(hearingId, noteId)
-    val auth = mockJwtAuthenticationWithWrongUser()
-
-    whenever(defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId))
-      .thenReturn(Mono.just(existingHearing))
-
-    webTestClient
-      .mutateWith(mockAuthentication(auth))
-      .delete()
+  fun `should return not found when deleting non-existent published note`() {
+    webTestClient.delete()
       .uri("/hearing/$hearingId/defendants/$defendantId/notes/$noteId")
+      .headers { it.setBearerAuth(generateMockJwt()) }
+      .exchange()
+      .expectStatus().isNotFound
+  }
+
+  @Test
+  fun `should return not found when hearing does not exist`() {
+    val nonExistentHearingId = generateUUID()
+    val request = HearingCaseNoteRequest(
+      note = "Test note",
+      createdByUUID = null,
+      author = "Test Author",
+    )
+
+    webTestClient.post()
+      .uri("/hearing/$nonExistentHearingId/defendant/$defendantId/note")
+      .headers { it.setBearerAuth(generateMockJwt()) }
+      .contentType(MediaType.APPLICATION_JSON)
+      .bodyValue(request)
       .exchange()
       .expectStatus().is5xxServerError
   }
 
-  private fun stubAuthServiceValidation() {
-    wireMockServer.stubFor(
-      get(urlPathEqualTo("/auth/validate"))
-        .willReturn(
-          aResponse()
-            .withStatus(200)
-            .withHeader("Content-Type", "application/json")
-            .withBodyFile("auth-validation-response.json"),
-        ),
-    )
-  }
-
-  private fun mockJwtAuthentication(username: String = "test-user"): JwtTokenAuthenticationImpl {
-    val claims = mapOf(
-      "sub" to username,
-      "user_uuid" to HearingNotesTestDataHelper.TEST_USER_UUID.toString(),
-      "user_id" to username,
-      "user_name" to username,
-      "auth_source" to "auth",
-    )
-
-    val jwt = Jwt.withTokenValue("mock-token")
-      .header("alg", "none")
-      .claims { it.putAll(claims) }
-      .build()
-
-    return JwtTokenAuthenticationImpl(jwt, false, emptyList())
-  }
-
-  private fun mockJwtAuthenticationWithWrongUser(username: String = "wrong-user"): JwtTokenAuthenticationImpl {
-    val claims = mapOf(
-      "sub" to username,
-      "user_uuid" to HearingNotesTestDataHelper.TEST_USER_UUID.toString(),
-      "user_id" to username,
-      "user_name" to username,
-      "auth_source" to "auth",
-    )
-
-    val jwt = Jwt.withTokenValue("mock-token")
-      .header("alg", "none")
-      .claims { it.putAll(claims) }
-      .build()
-
-    return JwtTokenAuthenticationImpl(jwt, false, emptyList())
-  }
+  private fun generateMockJwt(): String = "Bearer mock-jwt-token"
 }

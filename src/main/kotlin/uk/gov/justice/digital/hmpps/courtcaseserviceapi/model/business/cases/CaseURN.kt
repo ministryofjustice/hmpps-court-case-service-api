@@ -15,7 +15,7 @@ data class CaseURN(
   val version: Int?,
 )
 
-data class CaseURNs(
+data class CaseURNWrapper(
   @JsonProperty("caseURNs")
-  val caseURNs: List<CaseURN>,
+  val caseURNs: List<CaseURN>?,
 )

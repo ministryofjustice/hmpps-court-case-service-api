@@ -14,3 +14,7 @@ data class CourtRoom(
   val isSoftDeleted: Boolean?,
   val version: Int?,
 )
+
+data class CourtRoomWrapper(
+  var courtRooms: List<CourtRoom>?,
+)

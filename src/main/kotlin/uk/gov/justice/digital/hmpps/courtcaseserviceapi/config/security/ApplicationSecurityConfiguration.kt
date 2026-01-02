@@ -6,9 +6,9 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity
-import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.config.web.server.ServerHttpSecurity
 import org.springframework.security.web.server.SecurityWebFilterChain
+import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository
 import org.springframework.security.web.server.util.matcher.PathPatternParserServerWebExchangeMatcher
 
 @Configuration
@@ -21,7 +21,7 @@ class ApplicationSecurityConfiguration {
 
   @Bean
   fun apiHttpSecurity(http: ServerHttpSecurity): SecurityWebFilterChain = http.securityMatcher(PathPatternParserServerWebExchangeMatcher("/**"))
-    .sessionManagement { SessionCreationPolicy.STATELESS }
+    .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
     .csrf { csrf -> csrf.disable() }
     .oauth2Client(Customizer.withDefaults())
     .authorizeExchange { exchanges ->

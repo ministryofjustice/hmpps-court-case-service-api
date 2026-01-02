@@ -5,6 +5,8 @@ import java.util.UUID
 
 data class HearingOutcome(
   val id: UUID?,
+  val legacyId: Int? = null,
+  val defendantId: UUID? = null,
   val type: String?,
   val outcomeDate: OffsetDateTime?,
   val state: String?,
@@ -18,4 +20,8 @@ data class HearingOutcome(
   val updatedBy: String?,
   val isSoftDeleted: Boolean?,
   val version: Int?,
+)
+
+data class HearingOutcomeWrapper(
+  var hearingOutcomes: List<HearingOutcome>? = null,
 )

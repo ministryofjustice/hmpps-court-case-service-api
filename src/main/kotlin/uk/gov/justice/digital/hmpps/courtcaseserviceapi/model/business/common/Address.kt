@@ -5,6 +5,7 @@ import java.util.UUID
 
 data class Address(
   val id: UUID,
+  val type: String?,
   val address1: String?,
   val address2: String?,
   val address3: String?,
@@ -17,4 +18,8 @@ data class Address(
   val updatedBy: String?,
   val isSoftDeleted: Boolean?,
   val version: Int?,
+)
+
+data class AddressWrapper(
+  val addresses: List<Address>?,
 )

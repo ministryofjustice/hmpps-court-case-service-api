@@ -5,34 +5,39 @@ import uk.gov.justice.digital.hmpps.courtcaseserviceapi.model.api.hearing.Hearin
 import uk.gov.justice.digital.hmpps.courtcaseserviceapi.model.api.hearing.HearingCaseNoteResponse
 import uk.gov.justice.digital.hmpps.courtcaseserviceapi.model.business.hearing.HearingCaseNote
 import java.time.OffsetDateTime
-import java.time.ZoneOffset
+import java.util.UUID
 
 class HearingMapper {
   companion object {
 
-    fun convertRequestNoteToBusiness(hearingCaseNoteApi: HearingCaseNoteRequest): HearingCaseNote = HearingCaseNote(
-      id = Generators.timeBasedEpochGenerator().generate(),
-      note = hearingCaseNoteApi.note,
-      author = hearingCaseNoteApi.author,
-      isDraft = true,
-      isLegacy = false,
-      createdByUUID = hearingCaseNoteApi.createdByUUID,
-      createdAt = OffsetDateTime.now(ZoneOffset.UTC),
-      createdBy = hearingCaseNoteApi.author,
-      updatedAt = null,
-      updatedBy = null,
-      isSoftDeleted = false,
-      version = 0,
-    )
+    fun mapRequestToBusinessNote(defendantId: UUID, requestNote: HearingCaseNoteRequest): HearingCaseNote {
+      val newCaseNote = HearingCaseNote(
+        id = Generators.timeBasedEpochGenerator().generate(),
+        legacyId = null,
+        defendantId = defendantId,
+        note = requestNote.note,
+        author = requestNote.author,
+        isDraft = true,
+        isLegacy = false,
+        createdByUUID = requestNote.createdByUUID,
+        createdAt = OffsetDateTime.now(),
+        createdBy = requestNote.author,
+        updatedAt = null,
+        updatedBy = null,
+        isSoftDeleted = false,
+        version = 0,
+      )
+      return newCaseNote
+    }
 
-    fun convertBusinessNoteToResponse(hearingCaseNote: HearingCaseNote?): HearingCaseNoteResponse = HearingCaseNoteResponse(
-      noteId = hearingCaseNote?.id,
-      note = hearingCaseNote?.note,
-      createdAt = hearingCaseNote?.createdAt,
-      author = hearingCaseNote?.author,
-      createdByUuid = hearingCaseNote?.createdByUUID,
-      isDraft = hearingCaseNote?.isDraft,
-      isLegacy = hearingCaseNote?.isLegacy,
+    fun mapBusinessNoteToResponse(caseNote: HearingCaseNote): HearingCaseNoteResponse = HearingCaseNoteResponse(
+      noteId = caseNote.id,
+      note = caseNote.note,
+      createdAt = caseNote.createdAt,
+      author = caseNote.author,
+      createdByUuid = caseNote.createdByUUID,
+      isDraft = caseNote.isDraft,
+      isLegacy = caseNote.isLegacy,
     )
   }
 }

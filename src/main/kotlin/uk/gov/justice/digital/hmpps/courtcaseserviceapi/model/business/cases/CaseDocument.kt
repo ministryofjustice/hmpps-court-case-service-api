@@ -7,6 +7,8 @@ import java.util.UUID
 data class CaseDocument(
   @JsonProperty("id")
   val id: UUID? = null,
+  @JsonProperty("defendantId")
+  val defendantId: UUID? = null,
   @JsonProperty("documentId")
   val documentId: UUID? = null,
   @JsonProperty("documentName")
@@ -23,4 +25,8 @@ data class CaseDocument(
   val isSoftDeleted: Boolean? = null,
   @JsonProperty("version")
   val version: Int? = null,
+)
+
+data class CaseDocumentWrapper(
+  var caseDocuments: List<CaseDocument>? = null,
 )

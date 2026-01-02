@@ -3,16 +3,18 @@ package uk.gov.justice.digital.hmpps.courtcaseserviceapi.model.business.defendan
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
+import uk.gov.justice.digital.hmpps.courtcaseserviceapi.model.business.common.Address
 import java.io.Serializable
 import java.time.OffsetDateTime
 import java.util.UUID
 
-@Table("defendants")
+@Table("defendant")
 data class Defendant(
   @Id
   @Column("id")
   val id: UUID?,
   val offenderID: UUID?,
+  val legacyId: Int?,
   val defendantID: UUID?,
   val masterDefendantID: UUID?,
   val type: String?,
@@ -21,7 +23,12 @@ data class Defendant(
   val pncId: String?,
   val croNumber: String?,
   val crn: String?,
-  val person: Person? = null,
+
+  @Column("person")
+  val person: List<Person>?,
+
+  @Column("address")
+  val address: List<Address>?,
   val isYouth: Boolean?,
   val tsvName: String?,
   val isProceedingsConcluded: Boolean?,

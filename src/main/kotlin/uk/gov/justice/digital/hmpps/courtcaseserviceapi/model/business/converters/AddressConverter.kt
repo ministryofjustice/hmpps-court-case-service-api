@@ -6,48 +6,46 @@ import io.r2dbc.postgresql.codec.Json
 import org.slf4j.LoggerFactory
 import org.springframework.core.convert.converter.Converter
 import org.springframework.data.convert.ReadingConverter
-import org.springframework.data.convert.WritingConverter
-import uk.gov.justice.digital.hmpps.courtcaseserviceapi.model.business.court.CourtRoom
-import uk.gov.justice.digital.hmpps.courtcaseserviceapi.model.business.court.CourtRoomWrapper
+import uk.gov.justice.digital.hmpps.courtcaseserviceapi.model.business.common.Address
+import uk.gov.justice.digital.hmpps.courtcaseserviceapi.model.business.common.AddressWrapper
 
-@WritingConverter
-class CourtRoomEncoder(
+class AddressEncoder(
   private val objectMapper: ObjectMapper,
-) : Converter<List<CourtRoom>, Json> {
+) : Converter<List<Address>, Json> {
 
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
   }
 
-  override fun convert(source: List<CourtRoom>): Json = try {
-    log.info("Converting CourtRoom to JSON")
-    val wrapper = CourtRoomWrapper(source)
+  override fun convert(source: List<Address>): Json = try {
+    log.info("Converting Address to JSON")
+    val wrapper = AddressWrapper(source)
     val json = objectMapper.writeValueAsString(wrapper)
     Json.of(json)
   } catch (ex: JsonProcessingException) {
-    throw IllegalArgumentException("Error converting CourtRoom list to JSON", ex)
+    throw IllegalArgumentException("Error converting Address list to JSON", ex)
   }
 }
 
 @ReadingConverter
-class CourtRoomDecoder(
+class AddressDecoder(
   private val objectMapper: ObjectMapper,
-) : Converter<Json, List<CourtRoom>> {
+) : Converter<Json, List<Address>> {
 
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
   }
 
-  override fun convert(source: Json): List<CourtRoom>? {
-    log.info("Converting JSON to CourtRoom")
+  override fun convert(source: Json): List<Address>? {
+    log.info("Converting JSON to Address")
     try {
       val wrapper = objectMapper.readValue(
         source.asString(),
-        CourtRoomWrapper::class.java,
+        AddressWrapper::class.java,
       )
-      return wrapper.courtRooms
+      return wrapper.addresses
     } catch (ex: JsonProcessingException) {
-      throw IllegalArgumentException("Error converting JSON to CourtRoom list", ex)
+      throw IllegalArgumentException("Error converting JSON to Address list", ex)
     }
   }
 }

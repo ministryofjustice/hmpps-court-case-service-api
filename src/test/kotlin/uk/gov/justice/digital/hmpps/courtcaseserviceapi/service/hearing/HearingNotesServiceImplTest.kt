@@ -1,11 +1,9 @@
 package uk.gov.justice.digital.hmpps.courtcaseserviceapi.service.hearing
 
-import com.fasterxml.uuid.Generators
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import org.assertj.core.api.AssertionsForInterfaceTypes.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -24,18 +22,13 @@ class HearingNotesServiceImplTest {
 
   private lateinit var hearingRepository: HearingRepository
   private lateinit var defendantHearingRepository: DefendantHearingRepository
-  private lateinit var service: HearingNotesServiceImpl
-
-  private val testHearingId = TestDataBuilder.generateUUID()
-  private val testDefendantId = TestDataBuilder.generateUUID()
-  private val testNoteId = TestDataBuilder.generateUUID()
-  private val testUserUUID = TestDataBuilder.generateUUID()
+  private lateinit var hearingNotesService: HearingNotesServiceImpl
 
   @BeforeEach
-  fun setup() {
+  fun setUp() {
     hearingRepository = mockk()
     defendantHearingRepository = mockk()
-    service = HearingNotesServiceImpl(hearingRepository, defendantHearingRepository)
+    hearingNotesService = HearingNotesServiceImpl(hearingRepository, defendantHearingRepository)
   }
 
   @AfterEach
@@ -44,283 +37,238 @@ class HearingNotesServiceImplTest {
   }
 
   @Test
-  fun `addHearingCaseNoteAsDraft should throw HearingNotFoundException when hearing does not exist`() {
-    val request = TestDataBuilder.createHearingCaseNoteRequest()
+  fun `addHearingCaseNoteAsDraft should create new draft note when no existing draft`() {
+    val hearingId = TestDataBuilder.generateUUID()
+    val defendantId = TestDataBuilder.generateUUID()
+    val request = TestDataBuilder.buildHearingCaseNoteRequest()
+    val hearing = TestDataBuilder.buildHearing(hearingId = hearingId, hearingCaseNote = null)
+    val savedHearing = hearing.copy(hearingCaseNote = listOf(TestDataBuilder.buildHearingCaseNote(defendantId = defendantId)))
 
-    every { defendantHearingRepository.findByDefendantIdAndHearingId(testDefendantId, testHearingId) } returns Mono.empty()
-
-    StepVerifier.create(service.addHearingCaseNoteAsDraft(testHearingId, testDefendantId, request))
-      .expectError(HearingNotFoundException::class.java)
-      .verify()
-
-    verify { defendantHearingRepository.findByDefendantIdAndHearingId(testDefendantId, testHearingId) }
-  }
-
-  @Test
-  fun `addHearingCaseNoteAsDraft should save draft note when hearing has no existing note`() {
-    val request = TestDataBuilder.createHearingCaseNoteRequest(userUUID = testUserUUID)
-    val hearing = TestDataBuilder.createHearing(hearingID = testHearingId, hearingCaseNote = null)
-    val savedHearing = hearing.copy(
-      hearingCaseNote = TestDataBuilder.createHearingCaseNote(
-        isDraft = true,
-        note = request.note,
-        author = request.author,
-        createdByUUID = request.createdByUUID,
-      ),
-    )
-
-    every { defendantHearingRepository.findByDefendantIdAndHearingId(testDefendantId, testHearingId) } returns Mono.just(hearing)
+    every { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) } returns Mono.just(hearing)
     every { hearingRepository.save(any<Hearing>()) } returns Mono.just(savedHearing)
 
-    StepVerifier.create(service.addHearingCaseNoteAsDraft(testHearingId, testDefendantId, request))
-      .assertNext { response ->
-        assertThat(response.isDraft).isTrue
-        assertThat(request.note).isEqualTo(response.note)
-        assertThat(request.author).isEqualTo(response.author)
+    StepVerifier.create(hearingNotesService.addHearingCaseNoteAsDraft(hearingId, defendantId, request))
+      .expectNextMatches { response ->
+        response.noteId != null &&
+          response.note == request.note &&
+          response.author == request.author &&
+          response.createdByUuid == request.createdByUUID &&
+          response.isDraft == true
       }
       .verifyComplete()
 
-    verify { hearingRepository.save(any<Hearing>()) }
+    verify(exactly = 1) { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) }
+    verify(exactly = 1) { hearingRepository.save(any<Hearing>()) }
   }
 
   @Test
-  fun `addHearingCaseNoteAsDraft should filter out hearings with existing case notes`() {
-    val request = TestDataBuilder.createHearingCaseNoteRequest()
-    val existingNote = TestDataBuilder.createHearingCaseNote(isDraft = true)
-    val hearing = TestDataBuilder.createHearing(hearingID = testHearingId, hearingCaseNote = existingNote)
+  fun `addHearingCaseNoteAsDraft should return existing draft when found`() {
+    val hearingId = TestDataBuilder.generateUUID()
+    val defendantId = TestDataBuilder.generateUUID()
+    val request = TestDataBuilder.buildHearingCaseNoteRequest()
+    val existingDraftNote = TestDataBuilder.buildHearingCaseNote(
+      defendantId = defendantId,
+      createdByUUID = request.createdByUUID,
+      isDraft = true,
+    )
+    val hearing = TestDataBuilder.buildHearing(hearingId = hearingId, hearingCaseNote = listOf(existingDraftNote))
 
-    every { defendantHearingRepository.findByDefendantIdAndHearingId(testDefendantId, testHearingId) } returns Mono.just(hearing)
+    every { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) } returns Mono.just(hearing)
 
-    StepVerifier.create(service.addHearingCaseNoteAsDraft(testHearingId, testDefendantId, request))
+    StepVerifier.create(hearingNotesService.addHearingCaseNoteAsDraft(hearingId, defendantId, request))
+      .expectNextMatches { response ->
+        response.noteId == existingDraftNote.id &&
+          response.isDraft == true
+      }
       .verifyComplete()
 
+    verify(exactly = 1) { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) }
     verify(exactly = 0) { hearingRepository.save(any<Hearing>()) }
   }
 
   @Test
-  fun `updateHearingCaseNoteDraft should throw HearingNotFoundException when hearing does not exist`() {
-    val request = TestDataBuilder.createHearingCaseNoteRequest()
+  fun `addHearingCaseNoteAsDraft should throw HearingNotFoundException when hearing not found`() {
+    val hearingId = TestDataBuilder.generateUUID()
+    val defendantId = TestDataBuilder.generateUUID()
+    val request = TestDataBuilder.buildHearingCaseNoteRequest()
 
-    every { defendantHearingRepository.findByDefendantIdAndHearingId(testDefendantId, testHearingId) } returns Mono.empty()
+    every { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) } returns Mono.empty()
 
-    StepVerifier.create(service.updateHearingCaseNoteDraft(testHearingId, testDefendantId, request))
+    StepVerifier.create(hearingNotesService.addHearingCaseNoteAsDraft(hearingId, defendantId, request))
       .expectError(HearingNotFoundException::class.java)
       .verify()
+
+    verify(exactly = 1) { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) }
   }
 
   @Test
   fun `updateHearingCaseNoteDraft should update existing draft note`() {
-    val request = TestDataBuilder.createHearingCaseNoteRequest(note = "Updated note", userUUID = testUserUUID)
-    val existingNote = TestDataBuilder.createHearingCaseNote(
-      id = testNoteId,
-      note = "Original note",
+    val hearingId = TestDataBuilder.generateUUID()
+    val defendantId = TestDataBuilder.generateUUID()
+    val request = TestDataBuilder.buildHearingCaseNoteRequest(note = "Updated note")
+    val existingDraftNote = TestDataBuilder.buildHearingCaseNote(
+      defendantId = defendantId,
+      createdByUUID = request.createdByUUID,
       isDraft = true,
-      isSoftDeleted = false,
-      createdByUUID = testUserUUID,
     )
-    val hearing = TestDataBuilder.createHearing(hearingID = testHearingId, hearingCaseNote = existingNote)
-    val updatedHearing = hearing.copy()
+    val hearing = TestDataBuilder.buildHearing(hearingId = hearingId, hearingCaseNote = mutableListOf(existingDraftNote))
+    val savedHearing = hearing.copy()
 
-    every { defendantHearingRepository.findByDefendantIdAndHearingId(testDefendantId, testHearingId) } returns Mono.just(hearing)
-    every { hearingRepository.save(any<Hearing>()) } returns Mono.just(updatedHearing)
+    every { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) } returns Mono.just(hearing)
+    every { hearingRepository.save(any<Hearing>()) } returns Mono.just(savedHearing)
 
-    StepVerifier.create(service.updateHearingCaseNoteDraft(testHearingId, testDefendantId, request))
-      .assertNext { response ->
-        assertThat(request.note).isEqualTo(response.note)
-        assertThat(response.isDraft).isTrue
+    StepVerifier.create(hearingNotesService.updateHearingCaseNoteDraft(hearingId, defendantId, request))
+      .expectNextMatches { response ->
+        response.note == request.note &&
+          response.author == request.author
       }
       .verifyComplete()
 
-    verify { hearingRepository.save(any<Hearing>()) }
+    verify(exactly = 1) { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) }
+    verify(exactly = 1) { hearingRepository.save(any<Hearing>()) }
   }
 
   @Test
-  fun `updateHearingCaseNoteDraft should not update when note is null`() {
-    val request = TestDataBuilder.createHearingCaseNoteRequest()
-    val hearing = TestDataBuilder.createHearing(hearingID = testHearingId, hearingCaseNote = null)
-
-    every { defendantHearingRepository.findByDefendantIdAndHearingId(testDefendantId, testHearingId) } returns Mono.just(hearing)
-
-    StepVerifier.create(service.updateHearingCaseNoteDraft(testHearingId, testDefendantId, request))
-      .verifyComplete()
-
-    verify(exactly = 0) { hearingRepository.save(any<Hearing>()) }
-  }
-
-  @Test
-  fun `updateHearingCaseNoteDraft should not update when note is soft deleted`() {
-    val request = TestDataBuilder.createHearingCaseNoteRequest()
-    val existingNote = TestDataBuilder.createHearingCaseNote(isDraft = true, isSoftDeleted = true)
-    val hearing = TestDataBuilder.createHearing(hearingID = testHearingId, hearingCaseNote = existingNote)
-
-    every { defendantHearingRepository.findByDefendantIdAndHearingId(testDefendantId, testHearingId) } returns Mono.just(hearing)
-
-    StepVerifier.create(service.updateHearingCaseNoteDraft(testHearingId, testDefendantId, request))
-      .verifyComplete()
-
-    verify(exactly = 0) { hearingRepository.save(any<Hearing>()) }
-  }
-
-  @Test
-  fun `updateHearingCaseNoteDraft should not update when note is not a draft`() {
-    val request = TestDataBuilder.createHearingCaseNoteRequest()
-    val existingNote = TestDataBuilder.createHearingCaseNote(isDraft = false, isSoftDeleted = false)
-    val hearing = TestDataBuilder.createHearing(hearingID = testHearingId, hearingCaseNote = existingNote)
-
-    every { defendantHearingRepository.findByDefendantIdAndHearingId(testDefendantId, testHearingId) } returns Mono.just(hearing)
-
-    StepVerifier.create(service.updateHearingCaseNoteDraft(testHearingId, testDefendantId, request))
-      .verifyComplete()
-
-    verify(exactly = 0) { hearingRepository.save(any<Hearing>()) }
-  }
-
-  @Test
-  fun `deleteHearingCaseNoteDraft should throw HearingNotFoundException when hearing does not exist`() {
-    every { defendantHearingRepository.findByDefendantIdAndHearingId(testDefendantId, testHearingId) } returns Mono.empty()
-
-    StepVerifier.create(service.deleteHearingCaseNoteDraft(testHearingId, testDefendantId, testUserUUID))
-      .expectError(HearingNotFoundException::class.java)
-      .verify()
-  }
-
-  @Test
-  fun `deleteHearingCaseNoteDraft should soft delete draft note when user matches`() {
-    val existingNote = TestDataBuilder.createHearingCaseNote(
-      isDraft = true,
-      isSoftDeleted = false,
-      createdByUUID = testUserUUID,
+  fun `updateHearingCaseNoteDraft should throw HearingCaseNoteDraftNotFoundException when draft not found`() {
+    val hearingId = TestDataBuilder.generateUUID()
+    val defendantId = TestDataBuilder.generateUUID()
+    val request = TestDataBuilder.buildHearingCaseNoteRequest()
+    val nonDraftNote = TestDataBuilder.buildHearingCaseNote(
+      defendantId = defendantId,
+      createdByUUID = request.createdByUUID,
+      isDraft = false,
     )
-    val hearing = TestDataBuilder.createHearing(hearingID = testHearingId, hearingCaseNote = existingNote)
+    val hearing = TestDataBuilder.buildHearing(hearingId = hearingId, hearingCaseNote = listOf(nonDraftNote))
 
-    every { defendantHearingRepository.findByDefendantIdAndHearingId(testDefendantId, testHearingId) } returns Mono.just(hearing)
-    every { hearingRepository.save(any<Hearing>()) } returns Mono.just(hearing)
+    every { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) } returns Mono.just(hearing)
 
-    StepVerifier.create(service.deleteHearingCaseNoteDraft(testHearingId, testDefendantId, testUserUUID))
-      .assertNext { result ->
-        assertThat(result).isTrue
-      }
-      .verifyComplete()
-
-    verify { hearingRepository.save(any<Hearing>()) }
-  }
-
-  @Test
-  fun `deleteHearingCaseNoteDraft should throw exception when user does not match creator`() {
-    val existingNote = TestDataBuilder.createHearingCaseNote(
-      isDraft = true,
-      isSoftDeleted = false,
-      createdByUUID = Generators.timeBasedEpochGenerator().generate(),
-    )
-    val hearing = TestDataBuilder.createHearing(hearingID = testHearingId, hearingCaseNote = existingNote)
-
-    every { defendantHearingRepository.findByDefendantIdAndHearingId(testDefendantId, testHearingId) } returns Mono.just(hearing)
-
-    StepVerifier.create(service.deleteHearingCaseNoteDraft(testHearingId, testDefendantId, testUserUUID))
+    StepVerifier.create(hearingNotesService.updateHearingCaseNoteDraft(hearingId, defendantId, request))
       .expectError(HearingCaseNoteDraftNotFoundException::class.java)
       .verify()
 
-    verify(exactly = 0) { hearingRepository.save(any<Hearing>()) }
+    verify(exactly = 1) { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) }
   }
 
   @Test
-  fun `updateHearingCaseNote should update published note when user matches`() {
-    val request = TestDataBuilder.createHearingCaseNoteRequest(note = "Updated published note", userUUID = testUserUUID)
-    val existingNote = TestDataBuilder.createHearingCaseNote(
-      id = testNoteId,
-      isDraft = false,
+  fun `deleteHearingCaseNoteDraft should soft delete draft note`() {
+    val hearingId = TestDataBuilder.generateUUID()
+    val defendantId = TestDataBuilder.generateUUID()
+    val userUUID = TestDataBuilder.generateUUID()
+    val existingDraftNote = TestDataBuilder.buildHearingCaseNote(
+      defendantId = defendantId,
+      createdByUUID = userUUID,
+      isDraft = true,
       isSoftDeleted = false,
-      createdByUUID = testUserUUID,
-      version = 1,
     )
-    val hearing = TestDataBuilder.createHearing(hearingID = testHearingId, hearingCaseNote = existingNote)
+    val hearing = TestDataBuilder.buildHearing(hearingId = hearingId, hearingCaseNote = mutableListOf(existingDraftNote))
 
-    every { defendantHearingRepository.findByDefendantIdAndHearingId(testDefendantId, testHearingId) } returns Mono.just(hearing)
+    every { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) } returns Mono.just(hearing)
     every { hearingRepository.save(any<Hearing>()) } returns Mono.just(hearing)
 
-    StepVerifier.create(service.updateHearingCaseNote(testHearingId, testDefendantId, testNoteId, request))
-      .assertNext { result ->
-        assertThat(result).isTrue
-      }
+    StepVerifier.create(hearingNotesService.deleteHearingCaseNoteDraft(hearingId, defendantId, userUUID))
+      .expectNext(true)
       .verifyComplete()
 
-    verify { hearingRepository.save(any<Hearing>()) }
+    verify(exactly = 1) { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) }
+    verify(exactly = 1) { hearingRepository.save(any<Hearing>()) }
   }
 
   @Test
-  fun `updateHearingCaseNote should throw exception when user does not match creator`() {
-    val request = TestDataBuilder.createHearingCaseNoteRequest(userUUID = testUserUUID)
-    val existingNote = TestDataBuilder.createHearingCaseNote(
-      id = testNoteId,
-      isDraft = false,
-      isSoftDeleted = false,
-      createdByUUID = Generators.timeBasedEpochGenerator().generate(),
-    )
-    val hearing = TestDataBuilder.createHearing(hearingID = testHearingId, hearingCaseNote = existingNote)
+  fun `deleteHearingCaseNoteDraft should throw HearingCaseNoteDraftNotFoundException when draft not found`() {
+    val hearingId = TestDataBuilder.generateUUID()
+    val defendantId = TestDataBuilder.generateUUID()
+    val userUUID = TestDataBuilder.generateUUID()
+    val hearing = TestDataBuilder.buildHearing(hearingId = hearingId, hearingCaseNote = null)
 
-    every { defendantHearingRepository.findByDefendantIdAndHearingId(testDefendantId, testHearingId) } returns Mono.just(hearing)
+    every { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) } returns Mono.just(hearing)
 
-    StepVerifier.create(service.updateHearingCaseNote(testHearingId, testDefendantId, testNoteId, request))
-      .expectError(HearingCaseNoteNotFoundException::class.java)
+    StepVerifier.create(hearingNotesService.deleteHearingCaseNoteDraft(hearingId, defendantId, userUUID))
+      .expectError(HearingCaseNoteDraftNotFoundException::class.java)
       .verify()
+
+    verify(exactly = 1) { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) }
   }
 
   @Test
-  fun `updateHearingCaseNote should throw exception when noteId does not match`() {
-    val request = TestDataBuilder.createHearingCaseNoteRequest(userUUID = testUserUUID)
-    val existingNote = TestDataBuilder.createHearingCaseNote(
-      id = Generators.timeBasedEpochGenerator().generate(),
+  fun `updateHearingCaseNote should update non-draft note successfully`() {
+    val hearingId = TestDataBuilder.generateUUID()
+    val defendantId = TestDataBuilder.generateUUID()
+    val noteId = TestDataBuilder.generateUUID()
+    val request = TestDataBuilder.buildHearingCaseNoteRequest(note = "Updated note")
+    val existingNote = TestDataBuilder.buildHearingCaseNote(
+      defendantId = defendantId,
+      createdByUUID = request.createdByUUID,
       isDraft = false,
-      isSoftDeleted = false,
-      createdByUUID = testUserUUID,
     )
-    val hearing = TestDataBuilder.createHearing(hearingID = testHearingId, hearingCaseNote = existingNote)
+    val hearing = TestDataBuilder.buildHearing(hearingId = hearingId, hearingCaseNote = mutableListOf(existingNote))
 
-    every { defendantHearingRepository.findByDefendantIdAndHearingId(testDefendantId, testHearingId) } returns Mono.just(hearing)
-
-    StepVerifier.create(service.updateHearingCaseNote(testHearingId, testDefendantId, testNoteId, request))
-      .expectError(HearingCaseNoteNotFoundException::class.java)
-      .verify()
-  }
-
-  @Test
-  fun `deleteHearingCaseNote should soft delete published note when user matches`() {
-    val existingNote = TestDataBuilder.createHearingCaseNote(
-      id = testNoteId,
-      isDraft = false,
-      isSoftDeleted = false,
-      createdByUUID = testUserUUID,
-    )
-    val hearing = TestDataBuilder.createHearing(hearingID = testHearingId, hearingCaseNote = existingNote)
-
-    every { defendantHearingRepository.findByDefendantIdAndHearingId(testDefendantId, testHearingId) } returns Mono.just(hearing)
+    every { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) } returns Mono.just(hearing)
     every { hearingRepository.save(any<Hearing>()) } returns Mono.just(hearing)
 
-    StepVerifier.create(service.deleteHearingCaseNote(testHearingId, testDefendantId, testNoteId, testUserUUID))
-      .assertNext { result ->
-        assertThat(result).isTrue
-      }
+    StepVerifier.create(hearingNotesService.updateHearingCaseNote(hearingId, defendantId, noteId, request))
+      .expectNext(true)
       .verifyComplete()
 
-    verify { hearingRepository.save(any<Hearing>()) }
+    verify(exactly = 1) { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) }
+    verify(exactly = 1) { hearingRepository.save(any<Hearing>()) }
   }
 
   @Test
-  fun `deleteHearingCaseNote should throw exception when user does not match creator`() {
-    val existingNote = TestDataBuilder.createHearingCaseNote(
-      id = testNoteId,
-      isDraft = false,
-      isSoftDeleted = false,
-      createdByUUID = Generators.timeBasedEpochGenerator().generate(),
-    )
-    val hearing = TestDataBuilder.createHearing(hearingID = testHearingId, hearingCaseNote = existingNote)
+  fun `updateHearingCaseNote should throw HearingCaseNoteNotFoundException when note not found`() {
+    val hearingId = TestDataBuilder.generateUUID()
+    val defendantId = TestDataBuilder.generateUUID()
+    val noteId = TestDataBuilder.generateUUID()
+    val request = TestDataBuilder.buildHearingCaseNoteRequest()
+    val hearing = TestDataBuilder.buildHearing(hearingId = hearingId, hearingCaseNote = null)
 
-    every { defendantHearingRepository.findByDefendantIdAndHearingId(testDefendantId, testHearingId) } returns Mono.just(hearing)
+    every { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) } returns Mono.just(hearing)
 
-    StepVerifier.create(service.deleteHearingCaseNote(testHearingId, testDefendantId, testNoteId, testUserUUID))
+    StepVerifier.create(hearingNotesService.updateHearingCaseNote(hearingId, defendantId, noteId, request))
       .expectError(HearingCaseNoteNotFoundException::class.java)
       .verify()
 
-    verify(exactly = 0) { hearingRepository.save(any<Hearing>()) }
+    verify(exactly = 1) { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) }
+  }
+
+  @Test
+  fun `deleteHearingCaseNote should soft delete non-draft note`() {
+    val hearingId = TestDataBuilder.generateUUID()
+    val defendantId = TestDataBuilder.generateUUID()
+    val noteId = TestDataBuilder.generateUUID()
+    val userUUID = TestDataBuilder.generateUUID()
+    val existingNote = TestDataBuilder.buildHearingCaseNote(
+      defendantId = defendantId,
+      createdByUUID = userUUID,
+      isDraft = false,
+      isSoftDeleted = false,
+    )
+    val hearing = TestDataBuilder.buildHearing(hearingId = hearingId, hearingCaseNote = mutableListOf(existingNote))
+
+    every { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) } returns Mono.just(hearing)
+    every { hearingRepository.save(any<Hearing>()) } returns Mono.just(hearing)
+
+    StepVerifier.create(hearingNotesService.deleteHearingCaseNote(hearingId, defendantId, noteId, userUUID))
+      .expectNext(true)
+      .verifyComplete()
+
+    verify(exactly = 1) { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) }
+    verify(exactly = 1) { hearingRepository.save(any<Hearing>()) }
+  }
+
+  @Test
+  fun `deleteHearingCaseNote should throw HearingCaseNoteNotFoundException when note not found`() {
+    val hearingId = TestDataBuilder.generateUUID()
+    val defendantId = TestDataBuilder.generateUUID()
+    val noteId = TestDataBuilder.generateUUID()
+    val userUUID = TestDataBuilder.generateUUID()
+    val hearing = TestDataBuilder.buildHearing(hearingId = hearingId, hearingCaseNote = null)
+
+    every { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) } returns Mono.just(hearing)
+
+    StepVerifier.create(hearingNotesService.deleteHearingCaseNote(hearingId, defendantId, noteId, userUUID))
+      .expectError(HearingCaseNoteNotFoundException::class.java)
+      .verify()
+
+    verify(exactly = 1) { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) }
   }
 }

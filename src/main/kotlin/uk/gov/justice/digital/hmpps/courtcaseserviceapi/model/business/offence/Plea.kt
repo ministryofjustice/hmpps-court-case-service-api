@@ -4,7 +4,7 @@ import java.time.OffsetDateTime
 import java.util.UUID
 
 data class Plea(
-  val id: UUID,
+  val id: UUID?,
   val pleaDate: OffsetDateTime?,
   val value: String?,
   val createdAt: OffsetDateTime?,
@@ -13,4 +13,8 @@ data class Plea(
   val updatedBy: String?,
   val isSoftDeleted: Boolean?,
   val version: Int?,
+)
+
+data class PleaWrapper(
+  var pleas: List<Plea>? = null,
 )
