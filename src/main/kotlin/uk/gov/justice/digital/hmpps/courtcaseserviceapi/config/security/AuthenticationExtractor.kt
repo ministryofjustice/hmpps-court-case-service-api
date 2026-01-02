@@ -11,8 +11,21 @@ private const val AUTH_SOURCE = "auth_source"
 @Component
 class AuthenticationExtractor {
 
-  fun extractAuthUserUuid(principal: Principal): String = (principal as JwtTokenAuthenticationImpl).tokenAttributes[USER_UUID].toString()
-  fun extractAuthUserId(principal: Principal): String = (principal as JwtTokenAuthenticationImpl).tokenAttributes[USER_ID].toString()
-  fun extractAuthUserName(principal: Principal): String = (principal as JwtTokenAuthenticationImpl).tokenAttributes[USER_NAME].toString()
-  fun extractAuthSource(principal: Principal): String = (principal as JwtTokenAuthenticationImpl).tokenAttributes[AUTH_SOURCE].toString()
+  fun extractAuthUserUuid(principal: Principal): String = extractAttribute(principal, USER_UUID)
+
+  fun extractAuthUserId(principal: Principal): String = extractAttribute(principal, USER_ID)
+
+  fun extractAuthUserName(principal: Principal): String = extractAttribute(principal, USER_NAME)
+
+  fun extractAuthSource(principal: Principal): String = extractAttribute(principal, AUTH_SOURCE)
+
+  private fun extractAttribute(principal: Principal, attributeKey: String): String = when (principal) {
+    is JwtTokenAuthenticationImpl -> {
+      principal.tokenAttributes[attributeKey]?.toString()
+        ?: throw IllegalStateException("Attribute '$attributeKey' not found in token")
+    }
+    else -> throw IllegalArgumentException(
+      "Unsupported principal type: ${principal.javaClass.simpleName}",
+    )
+  }
 }

@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.courtcaseserviceapi.config.security
 
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
@@ -14,6 +15,9 @@ import org.springframework.security.web.server.util.matcher.PathPatternParserSer
 @EnableWebFluxSecurity
 @Profile("secured")
 class ApplicationSecurityConfiguration {
+
+  @field:Value("\${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
+  private lateinit var issuer: String
 
   @Bean
   fun apiHttpSecurity(http: ServerHttpSecurity): SecurityWebFilterChain = http.securityMatcher(PathPatternParserServerWebExchangeMatcher("/**"))

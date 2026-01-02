@@ -6,10 +6,12 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 
 class JwtTokenAuthenticationImpl(
   jwtToken: Jwt,
-  clientOnly: Boolean,
+  private val clientOnly: Boolean,
   authorities: Collection<GrantedAuthority>,
 ) : JwtAuthenticationToken(jwtToken, authorities) {
 
   private val subject = jwtToken.subject
-  private val clientOnly = clientOnly
+
+  fun isClientOnly(): Boolean = clientOnly
+  override fun getName(): String = tokenAttributes["sub"] as? String ?: "unknown"
 }

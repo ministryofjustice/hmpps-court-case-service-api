@@ -103,6 +103,7 @@ CREATE TABLE IF NOT EXISTS defendant(
     cro TEXT,
     crn TEXT,
     person JSONB NOT NULL,
+    address JSONB,
     is_youth BOOLEAN,
     tsv_name TSVECTOR,
     is_proceedings_concluded BOOLEAN,
