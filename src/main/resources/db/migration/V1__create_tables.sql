@@ -41,6 +41,8 @@ CREATE TABLE IF NOT EXISTS offender(
 CREATE TABLE IF NOT EXISTS prosecution_case(
     id UUID DEFAULT uuidv7() PRIMARY KEY,
     legacy_id INT,
+    case_id TEXT,
+    case_number TEXT,
     case_urn JSONB,
     source_type TEXT,
     case_marker JSONB,
@@ -97,7 +99,7 @@ CREATE TABLE IF NOT EXISTS defendant(
     defendant_id UUID UNIQUE NOT NULL,
     master_defendant_id UUID,
     type TEXT DEFAULT 'PERSON'::text NOT NULL,
-    cprUUID UUID,
+    cpr_uuid UUID,
     c_id TEXT,
     pnc TEXT,
     cro TEXT,
@@ -115,7 +117,7 @@ CREATE TABLE IF NOT EXISTS defendant(
     updated_by TEXT,
     is_soft_deleted BOOLEAN DEFAULT false NOT NULL,
     version INT DEFAULT 0 NOT NULL,
-    FOREIGN KEY (offender_id) REFERENCES offender(id) ON UPDATE CASCADE ON DELETE CASCADE
+    FOREIGN KEY (offender_id) REFERENCES offender(id) ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS offender_match_group(
@@ -129,8 +131,8 @@ CREATE TABLE IF NOT EXISTS offender_match_group(
     updated_by TEXT,
     is_soft_deleted BOOLEAN DEFAULT false NOT NULL,
     version INT DEFAULT 0 NOT NULL,
-    FOREIGN KEY (defendant_id) REFERENCES defendant(id) ON UPDATE CASCADE ON DELETE CASCADE,
-    FOREIGN KEY (prosecution_case_id) REFERENCES prosecution_case(id) ON UPDATE CASCADE ON DELETE CASCADE
+    FOREIGN KEY (defendant_id) REFERENCES defendant(id) ON UPDATE CASCADE,
+    FOREIGN KEY (prosecution_case_id) REFERENCES prosecution_case(id) ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS offender_match(
@@ -148,8 +150,8 @@ CREATE TABLE IF NOT EXISTS offender_match(
     updated_by TEXT,
     is_soft_deleted BOOLEAN DEFAULT false NOT NULL,
     version INT DEFAULT 0 NOT NULL,
-    FOREIGN KEY (offender_id) REFERENCES offender(id) ON UPDATE CASCADE ON DELETE CASCADE,
-    FOREIGN KEY (offender_match_group_id) REFERENCES offender_match_group(id) ON UPDATE CASCADE ON DELETE CASCADE
+    FOREIGN KEY (offender_id) REFERENCES offender(id) ON UPDATE CASCADE,
+    FOREIGN KEY (offender_match_group_id) REFERENCES offender_match_group(id) ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS case_comments(
@@ -168,8 +170,8 @@ CREATE TABLE IF NOT EXISTS case_comments(
     updated_by TEXT,
     is_soft_deleted BOOLEAN DEFAULT false NOT NULL,
     version INT DEFAULT 0 NOT NULL,
-    FOREIGN KEY (defendant_id) REFERENCES defendant(id) ON UPDATE CASCADE ON DELETE CASCADE,
-    FOREIGN KEY (prosecution_case_id) REFERENCES prosecution_case(id) ON UPDATE CASCADE ON DELETE CASCADE
+    FOREIGN KEY (defendant_id) REFERENCES defendant(id) ON UPDATE CASCADE,
+    FOREIGN KEY (prosecution_case_id) REFERENCES prosecution_case(id) ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS hearing_day(
@@ -186,8 +188,8 @@ CREATE TABLE IF NOT EXISTS hearing_day(
     updated_by TEXT,
     is_soft_deleted BOOLEAN DEFAULT false NOT NULL,
     version INT DEFAULT 0 NOT NULL,
-    FOREIGN KEY (court_centre_id) REFERENCES court_centre(id) ON UPDATE CASCADE ON DELETE CASCADE,
-    FOREIGN KEY (hearing_id) REFERENCES hearing(id) ON UPDATE CASCADE ON DELETE CASCADE
+    FOREIGN KEY (court_centre_id) REFERENCES court_centre(id) ON UPDATE CASCADE,
+    FOREIGN KEY (hearing_id) REFERENCES hearing(id) ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS defendant_offence(
@@ -200,8 +202,8 @@ CREATE TABLE IF NOT EXISTS defendant_offence(
     updated_by TEXT,
     is_soft_deleted BOOLEAN DEFAULT false NOT NULL,
     version INT DEFAULT 0 NOT NULL,
-    FOREIGN KEY (offence_id) REFERENCES offence(id) ON UPDATE CASCADE ON DELETE CASCADE,
-    FOREIGN KEY (defendant_id) REFERENCES defendant(id) ON UPDATE CASCADE ON DELETE CASCADE
+    FOREIGN KEY (offence_id) REFERENCES offence(id) ON UPDATE CASCADE,
+    FOREIGN KEY (defendant_id) REFERENCES defendant(id) ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS defendant_prosecution_case(
@@ -214,8 +216,8 @@ CREATE TABLE IF NOT EXISTS defendant_prosecution_case(
     updated_by TEXT,
     is_soft_deleted BOOLEAN DEFAULT false NOT NULL,
     version INT DEFAULT 0 NOT NULL,
-    FOREIGN KEY (defendant_id) REFERENCES defendant(id) ON UPDATE CASCADE ON DELETE CASCADE,
-    FOREIGN KEY (prosecution_case_id) REFERENCES prosecution_case(id) ON UPDATE CASCADE ON DELETE CASCADE
+    FOREIGN KEY (defendant_id) REFERENCES defendant(id) ON UPDATE CASCADE,
+    FOREIGN KEY (prosecution_case_id) REFERENCES prosecution_case(id) ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS defendant_hearing(
@@ -228,8 +230,8 @@ CREATE TABLE IF NOT EXISTS defendant_hearing(
     updated_by TEXT,
     is_soft_deleted BOOLEAN DEFAULT false NOT NULL,
     version INT DEFAULT 0 NOT NULL,
-    FOREIGN KEY (defendant_id) REFERENCES defendant(id) ON UPDATE CASCADE ON DELETE CASCADE,
-    FOREIGN KEY (hearing_id) REFERENCES hearing(id) ON UPDATE CASCADE ON DELETE CASCADE
+    FOREIGN KEY (defendant_id) REFERENCES defendant(id) ON UPDATE CASCADE,
+    FOREIGN KEY (hearing_id) REFERENCES hearing(id) ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS prosecution_case_hearing(
@@ -242,8 +244,8 @@ CREATE TABLE IF NOT EXISTS prosecution_case_hearing(
     updated_by TEXT,
     is_soft_deleted BOOLEAN DEFAULT false NOT NULL,
     version INT DEFAULT 0 NOT NULL,
-    FOREIGN KEY (prosecution_case_id) REFERENCES prosecution_case(id) ON UPDATE CASCADE ON DELETE CASCADE,
-    FOREIGN KEY (hearing_id) REFERENCES hearing(id) ON UPDATE CASCADE ON DELETE CASCADE
+    FOREIGN KEY (prosecution_case_id) REFERENCES prosecution_case(id) ON UPDATE CASCADE,
+    FOREIGN KEY (hearing_id) REFERENCES hearing(id) ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS failed_messages(

@@ -88,6 +88,13 @@ r2dbc:
       - resource-path: classpath:db/migration/*.sql
     migrations-schema: hmpps_court_case_service
 
+hmpps-document-management-api:
+  create-document: /documents/%s/%s
+  document-by-uuid: /documents/%s
+  client-service-name: prepare-a-case
+  document-type: PIC_CASE_DOCUMENTS
+  allowed-file-extensions: csv, doc, docx, jpg, jpeg, xml, ods, odt, pdf, png, ppt, pptx, rdf, rtf, txt, xls, xlsx, xml, zip
+
 server:
   port: 8080
   servlet:
@@ -119,3 +126,6 @@ management:
     info:
       cache:
         time-to-live: 2000ms
+
+hmpps.sqs:
+  useWebToken: true
