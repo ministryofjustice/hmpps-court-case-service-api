@@ -13,45 +13,43 @@ import uk.gov.justice.digital.hmpps.courtcaseserviceapi.model.business.hearing.H
 import uk.gov.justice.digital.hmpps.courtcaseserviceapi.model.exceptions.HearingCaseNoteDraftNotFoundException
 import uk.gov.justice.digital.hmpps.courtcaseserviceapi.model.exceptions.HearingCaseNoteNotFoundException
 import uk.gov.justice.digital.hmpps.courtcaseserviceapi.model.exceptions.HearingNotFoundException
-import uk.gov.justice.digital.hmpps.courtcaseserviceapi.repository.common.DefendantHearingRepository
 import uk.gov.justice.digital.hmpps.courtcaseserviceapi.repository.hearing.HearingRepository
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 
 @Service
 class HearingNotesServiceImpl(
-  val hearingRepository: HearingRepository,
-  val defendantHearingRepository: DefendantHearingRepository,
+  private val hearingRepository: HearingRepository,
 ) : HearingNotesService {
 
   private companion object {
     val log: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
-  private var updateCounter = 0
+  private val draftUpdateCounters = ConcurrentHashMap<UUID, AtomicInteger>()
 
-  override fun addHearingCaseNoteAsDraft(hearingId: UUID, defendantId: UUID, requestNote: HearingCaseNoteRequest): Mono<HearingCaseNoteResponse> {
-    val hearing = defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId)
-
-    return hearing.switchIfEmpty(Mono.error(HearingNotFoundException(hearingId.toString())))
-      .doOnNext { existingHearing ->
-        log.info("Adding hearing case-note as a draft for hearingId ${existingHearing.id} and defendantId $defendantId")
-      }
+  override fun addHearingCaseNoteAsDraft(
+    hearingId: UUID,
+    defendantId: UUID,
+    requestNote: HearingCaseNoteRequest,
+  ): Mono<HearingCaseNoteResponse> {
+    return findHearingOrFail(defendantId, hearingId)
+      .doOnNext { log.info("Adding hearing case-note as a draft for hearingId ${it.id} and defendantId $defendantId") }
       .flatMap { existingHearing ->
-        val existingCaseNote = existingHearing.hearingCaseNote
-        val existingDraftCaseNote = findExistingDraftNoteForDefendant(existingCaseNote, defendantId, requestNote.createdByUUID)
-        if (existingDraftCaseNote != null) return@flatMap Mono.just(mapBusinessNoteToResponse(existingDraftCaseNote))
-        val newCaseNote = mapRequestToBusinessNote(defendantId, requestNote)
-
-        val updatedNotes = if (existingCaseNote == null) {
-          mutableListOf(newCaseNote)
-        } else {
-          existingCaseNote + newCaseNote
+        val existingCaseNotes = existingHearing.hearingCaseNote
+        val existingDraft = findExistingDraftNoteForDefendant(existingCaseNotes, defendantId, requestNote.createdByUUID)
+        if (existingDraft != null) {
+          return@flatMap Mono.just(mapBusinessNoteToResponse(existingDraft))
         }
 
-        existingHearing.hearingCaseNote = updatedNotes
-        hearingRepository.save(existingHearing).map { mapBusinessNoteToResponse(newCaseNote) }
+        val newCaseNote = mapRequestToBusinessNote(defendantId, requestNote)
+        val updatedNotes = (existingCaseNotes ?: emptyList()) + newCaseNote
+
+        saveWithUpdatedNotes(existingHearing, updatedNotes)
+          .map { mapBusinessNoteToResponse(newCaseNote) }
       }
   }
 
@@ -60,33 +58,42 @@ class HearingNotesServiceImpl(
     defendantId: UUID,
     requestNote: HearingCaseNoteRequest,
   ): Mono<HearingCaseNoteResponse> {
-    val hearing = defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId)
-    updateCounter++
-
-    return hearing.switchIfEmpty(Mono.error(HearingNotFoundException(hearingId.toString())))
-      .doOnNext { existingHearing ->
-        log.info(
-          "Updating hearing case-note draft in hearingId ${existingHearing.id} for defendantId $defendantId",
-        )
-      }
+    return findHearingOrFail(defendantId, hearingId)
       .flatMap { existingHearing ->
-        val existingCaseNote = existingHearing.hearingCaseNote
-        val matchingCaseNote = existingCaseNote?.find {
-          it.defendantId == defendantId && it.createdByUUID == requestNote.createdByUUID && it.isDraft == true
+        val matchingCaseNote = existingHearing.hearingCaseNote?.find {
+          it.defendantId == defendantId &&
+            it.createdByUUID == requestNote.createdByUUID &&
+            it.isDraft == true
+        } ?: return@flatMap Mono.error(
+          buildDraftNotFoundException(hearingId, defendantId, requestNote.createdByUUID),
+        )
+
+        val updateCount = matchingCaseNote.id?.let {
+          draftUpdateCounters
+            .computeIfAbsent(it) { AtomicInteger(0) }
+        }
+          ?.incrementAndGet()
+
+        val shouldPublish = updateCount!! >= 3
+        if (shouldPublish) {
+          draftUpdateCounters.remove(matchingCaseNote.id)
         }
 
-        if (matchingCaseNote == null) {
-          return@flatMap Mono.error(
-            HearingCaseNoteDraftNotFoundException(
-              "Draft note not found for user %s on hearing %s with defendant %s",
-              requestNote.createdByUUID.toString(),
-              hearingId.toString(),
-              defendantId.toString(),
-            ),
-          )
-        }
+        val updatedNote = matchingCaseNote.copy(
+          note = requestNote.note,
+          author = requestNote.author,
+          updatedAt = OffsetDateTime.now(),
+          updatedBy = requestNote.author,
+          version = (matchingCaseNote.version ?: 0) + 1,
+          isDraft = !shouldPublish,
+        )
 
-        updateCaseNoteAndSaveToHearing(matchingCaseNote, requestNote, existingHearing, defendantId)
+        val updatedNotes = existingHearing.hearingCaseNote?.map {
+          if (it.id == matchingCaseNote.id) updatedNote else it
+        } ?: listOf(updatedNote)
+
+        saveWithUpdatedNotes(existingHearing, updatedNotes)
+          .map { mapBusinessNoteToResponse(updatedNote) }
       }
   }
 
@@ -95,31 +102,30 @@ class HearingNotesServiceImpl(
     defendantId: UUID,
     userUUID: UUID,
   ): Mono<Boolean> {
-    val hearing = defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId)
-
-    return hearing.switchIfEmpty(Mono.error(HearingNotFoundException(hearingId.toString())))
-      .doOnNext { existingHearing ->
-        log.info("Deleting HearingCaseNote draft in hearingId ${existingHearing.id} with user $userUUID for defendantId $defendantId")
-      }
+    return findHearingOrFail(defendantId, hearingId)
+      .doOnNext { log.info("Deleting HearingCaseNote draft in hearingId ${it.id} with user $userUUID for defendantId $defendantId") }
       .flatMap { existingHearing ->
-        val existingCaseNote = existingHearing.hearingCaseNote
-        val matchingCaseNote = existingCaseNote?.find {
+        val existingCaseNotes = existingHearing.hearingCaseNote
+        val matchingCaseNote = existingCaseNotes?.find {
           it.defendantId == defendantId && it.createdByUUID == userUUID && it.isDraft == true
         }
 
         if (matchingCaseNote == null) {
-          return@flatMap Mono.error(
-            HearingCaseNoteDraftNotFoundException(
-              "Draft note not found for user %s on hearing %s with defendant %s",
-              userUUID.toString(),
-              hearingId.toString(),
-              defendantId.toString(),
-            ),
-          )
-        } else {
-          matchingCaseNote.isSoftDeleted = true
-          hearingRepository.save(existingHearing).thenReturn(matchingCaseNote.isSoftDeleted ?: true)
+          return@flatMap Mono.error(buildDraftNotFoundException(hearingId, defendantId, userUUID))
         }
+
+        val updatedNote = matchingCaseNote.copy(
+          isSoftDeleted = true,
+          updatedAt = OffsetDateTime.now(),
+          updatedBy = userUUID.toString(),
+        )
+
+        val updatedNotes = existingCaseNotes?.map {
+          if (it.id == matchingCaseNote.id) updatedNote else it
+        } ?: listOf(updatedNote)
+
+        saveWithUpdatedNotes(existingHearing, updatedNotes)
+          .thenReturn(true)
       }
   }
 
@@ -129,38 +135,38 @@ class HearingNotesServiceImpl(
     noteId: UUID,
     requestNote: HearingCaseNoteRequest,
   ): Mono<Boolean> {
-    val hearing = defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId)
-
-    return hearing.switchIfEmpty(Mono.error(HearingNotFoundException(hearingId.toString())))
-      .doOnNext { existingHearing ->
-        log.info("Updating HearingCaseNote in hearingId ${existingHearing.id} with user $noteId for defendantId $defendantId")
-      }
+    return findHearingOrFail(defendantId, hearingId)
+      .doOnNext { log.info("Updating HearingCaseNote in hearingId ${it.id} with user $noteId for defendantId $defendantId") }
       .flatMap { existingHearing ->
-        val existingCaseNote = existingHearing.hearingCaseNote
-        val matchingCaseNote = existingCaseNote?.find {
-          it.defendantId == defendantId && it.createdByUUID == requestNote.createdByUUID && it.isDraft == false
+        val existingCaseNotes = existingHearing.hearingCaseNote
+        val matchingCaseNote = existingCaseNotes?.find {
+          it.id == noteId &&
+            it.defendantId == defendantId &&
+            it.createdByUUID == requestNote.createdByUUID &&
+            it.isDraft == false
         }
 
         if (matchingCaseNote == null) {
           return@flatMap Mono.error(
-            HearingCaseNoteNotFoundException(
-              noteId.toString(),
-              defendantId.toString(),
-              hearingId.toString(),
-              requestNote.createdByUUID.toString(),
-            ),
+            buildPublishedNotFoundException(noteId, defendantId, hearingId, requestNote.createdByUUID),
           )
-        } else {
-          val today = OffsetDateTime.now(ZoneOffset.UTC)
-          matchingCaseNote.note = requestNote.note
-          matchingCaseNote.author = requestNote.author
-          matchingCaseNote.createdByUUID = requestNote.createdByUUID
-          matchingCaseNote.updatedAt = today
-          matchingCaseNote.updatedBy = requestNote.author
-          matchingCaseNote.version = matchingCaseNote.version?.plus(1)
-
-          hearingRepository.save(existingHearing).thenReturn(matchingCaseNote.updatedAt == (today ?: true))
         }
+
+        val updatedNote = matchingCaseNote.copy(
+          note = requestNote.note,
+          author = requestNote.author,
+          createdByUUID = requestNote.createdByUUID,
+          updatedAt = OffsetDateTime.now(ZoneOffset.UTC),
+          updatedBy = requestNote.author,
+          version = (matchingCaseNote.version ?: 0) + 1,
+        )
+
+        val updatedNotes = existingCaseNotes?.map {
+          if (it.id == matchingCaseNote.id) updatedNote else it
+        } ?: listOf(updatedNote)
+
+        saveWithUpdatedNotes(existingHearing, updatedNotes)
+          .thenReturn(true)
       }
   }
 
@@ -170,30 +176,32 @@ class HearingNotesServiceImpl(
     noteId: UUID,
     userUUID: UUID,
   ): Mono<Boolean> {
-    val hearing = defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId)
-
-    return hearing.switchIfEmpty(Mono.error(HearingNotFoundException(hearingId.toString())))
-      .doOnNext { existingHearing ->
-        log.info("Deleting HearingCaseNote in hearingId ${existingHearing.id} with user $userUUID for defendantId $defendantId")
-      }
+    return findHearingOrFail(defendantId, hearingId)
+      .doOnNext { log.info("Deleting HearingCaseNote in hearingId ${it.id} with user $userUUID for defendantId $defendantId") }
       .flatMap { existingHearing ->
-        val existingCaseNote = existingHearing.hearingCaseNote
-        val matchingCaseNote = existingCaseNote?.find { it.defendantId == defendantId && it.createdByUUID == userUUID && it.isDraft == false }
+        val existingCaseNotes = existingHearing.hearingCaseNote
+        val matchingCaseNote = existingCaseNotes?.find {
+          it.id == noteId && it.defendantId == defendantId && it.createdByUUID == userUUID && !it.isDraft!!
+        }
 
         if (matchingCaseNote == null) {
           return@flatMap Mono.error(
-            HearingCaseNoteNotFoundException(
-              noteId.toString(),
-              defendantId.toString(),
-              hearingId.toString(),
-              userUUID.toString(),
-            ),
+            buildPublishedNotFoundException(noteId, defendantId, hearingId, userUUID),
           )
-        } else {
-          matchingCaseNote.isSoftDeleted = true
-          // TODO add in telemetry service here
-          hearingRepository.save(existingHearing).thenReturn(matchingCaseNote.isSoftDeleted ?: true)
         }
+
+        val updatedNote = matchingCaseNote.copy(
+          isSoftDeleted = true,
+          updatedAt = OffsetDateTime.now(),
+          updatedBy = userUUID.toString(),
+        )
+
+        val updatedNotes = existingCaseNotes?.map {
+          if (it.id == matchingCaseNote.id) updatedNote else it
+        } ?: listOf(updatedNote)
+
+        saveWithUpdatedNotes(existingHearing, updatedNotes)
+          .thenReturn(true)
       }
   }
 
@@ -201,40 +209,31 @@ class HearingNotesServiceImpl(
     note.defendantId == defendantId && note.createdByUUID == createdByUUID && note.isDraft == true
   }
 
-  private fun updateCaseNoteAndSaveToHearing(
-    matchingCaseNote: HearingCaseNote,
-    requestNote: HearingCaseNoteRequest,
-    existingHearing: Hearing,
+  private fun findHearingOrFail(defendantId: UUID, hearingId: UUID): Mono<Hearing> = hearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId)
+    .switchIfEmpty(Mono.error(HearingNotFoundException(hearingId.toString())))
+
+  private fun saveWithUpdatedNotes(existingHearing: Hearing, updatedNotes: List<HearingCaseNote>): Mono<Hearing> = hearingRepository.save(existingHearing.copy(hearingCaseNote = updatedNotes))
+
+  private fun buildDraftNotFoundException(
+    hearingId: UUID,
     defendantId: UUID,
-  ): Mono<HearingCaseNoteResponse> {
-    matchingCaseNote.note = requestNote.note
-    matchingCaseNote.author = requestNote.author
-    matchingCaseNote.createdByUUID = requestNote.createdByUUID
-    matchingCaseNote.updatedAt = OffsetDateTime.now()
-    if (updateCounter == 3) matchingCaseNote.isDraft = false
+    userUuid: UUID?,
+  ): HearingCaseNoteDraftNotFoundException = HearingCaseNoteDraftNotFoundException(
+    "Draft note not found for user %s on hearing %s with defendant %s",
+    userUuid?.toString() ?: "unknown",
+    hearingId.toString(),
+    defendantId.toString(),
+  )
 
-    // TODO if (matchingCaseNote.isDraft = false) call Telemetry service
-
-    return hearingRepository.save(existingHearing)
-      .map { savedHearing -> mapUpdatedCaseNoteToResponse(savedHearing, defendantId, requestNote) }
-  }
-
-  private fun mapUpdatedCaseNoteToResponse(
-    savedHearing: Hearing,
+  private fun buildPublishedNotFoundException(
+    noteId: UUID,
     defendantId: UUID,
-    requestNote: HearingCaseNoteRequest,
-  ): HearingCaseNoteResponse {
-    val updatedCaseNote = savedHearing.hearingCaseNote?.find {
-      it.defendantId == defendantId && it.createdByUUID == requestNote.createdByUUID
-    }
-    return HearingCaseNoteResponse(
-      noteId = updatedCaseNote?.id,
-      note = updatedCaseNote?.note,
-      createdAt = updatedCaseNote?.createdAt,
-      author = updatedCaseNote?.author,
-      createdByUuid = updatedCaseNote?.createdByUUID,
-      isDraft = updatedCaseNote?.isDraft,
-      isLegacy = updatedCaseNote?.isLegacy,
-    )
-  }
+    hearingId: UUID,
+    userUuid: UUID?,
+  ): HearingCaseNoteNotFoundException = HearingCaseNoteNotFoundException(
+    noteId.toString(),
+    defendantId.toString(),
+    hearingId.toString(),
+    userUuid?.toString() ?: "unknown",
+  )
 }
