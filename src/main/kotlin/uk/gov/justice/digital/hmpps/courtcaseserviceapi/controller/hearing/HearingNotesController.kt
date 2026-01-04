@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.courtcaseserviceapi.controller.hearings
+package uk.gov.justice.digital.hmpps.courtcaseserviceapi.controller.hearing
 
 import com.fasterxml.uuid.impl.UUIDUtil
 import org.springframework.http.HttpStatus.CREATED

@@ -1,7 +1,8 @@
-package uk.gov.justice.digital.hmpps.courtcaseserviceapi.controller
+package uk.gov.justice.digital.hmpps.courtcaseserviceapi.controller.hearing
 
 import com.fasterxml.uuid.Generators
-import org.assertj.core.api.AssertionsForInterfaceTypes.assertThat
+import org.assertj.core.api.AssertionsForClassTypes
+import org.assertj.core.api.AssertionsForInterfaceTypes
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
@@ -14,7 +15,7 @@ import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.security.core.authority.SimpleGrantedAuthority
-import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockJwt
+import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.reactive.server.WebTestClient
@@ -22,7 +23,6 @@ import org.springframework.test.web.reactive.server.expectBody
 import reactor.core.publisher.Mono
 import uk.gov.justice.digital.hmpps.courtcaseserviceapi.config.security.ApplicationSecurityConfiguration
 import uk.gov.justice.digital.hmpps.courtcaseserviceapi.config.security.AuthenticationExtractor
-import uk.gov.justice.digital.hmpps.courtcaseserviceapi.controller.hearings.HearingNotesController
 import uk.gov.justice.digital.hmpps.courtcaseserviceapi.model.api.hearing.HearingCaseNoteRequest
 import uk.gov.justice.digital.hmpps.courtcaseserviceapi.model.api.hearing.HearingCaseNoteResponse
 import uk.gov.justice.digital.hmpps.courtcaseserviceapi.service.hearing.HearingNotesService
@@ -87,7 +87,7 @@ class HearingNotesControllerTest {
       .thenReturn(Mono.just(response))
 
     webTestClient
-      .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_PREPARE_A_CASE")))
+      .mutateWith(SecurityMockServerConfigurers.mockJwt().authorities(SimpleGrantedAuthority("ROLE_PREPARE_A_CASE")))
       .post()
       .uri("/hearing/{hearingId}/defendant/{defendantId}/note", hearingId, defendantId)
       .contentType(MediaType.APPLICATION_JSON)
@@ -97,10 +97,10 @@ class HearingNotesControllerTest {
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
       .expectBody<HearingCaseNoteResponse>()
       .value { resp ->
-        assertThat(resp.noteId).isEqualTo(noteId)
-        assertThat(resp.note).isEqualTo("Test note")
-        assertThat(resp.author).isEqualTo("Important Person")
-        assertThat(resp.createdByUuid).isEqualTo(userUuid)
+        AssertionsForInterfaceTypes.assertThat(resp.noteId).isEqualTo(noteId)
+        AssertionsForClassTypes.assertThat(resp.note).isEqualTo("Test note")
+        AssertionsForClassTypes.assertThat(resp.author).isEqualTo("Important Person")
+        AssertionsForInterfaceTypes.assertThat(resp.createdByUuid).isEqualTo(userUuid)
       }
 
     verify(authenticationExtractor).extractAuthUserUuid(any<Principal>())
@@ -123,7 +123,7 @@ class HearingNotesControllerTest {
       .thenReturn(Mono.empty())
 
     webTestClient
-      .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_PREPARE_A_CASE")))
+      .mutateWith(SecurityMockServerConfigurers.mockJwt().authorities(SimpleGrantedAuthority("ROLE_PREPARE_A_CASE")))
       .post()
       .uri("/hearing/{hearingId}/defendant/{defendantId}/note", hearingId, defendantId)
       .contentType(MediaType.APPLICATION_JSON)
@@ -151,7 +151,7 @@ class HearingNotesControllerTest {
       .thenReturn(Mono.just(response))
 
     webTestClient
-      .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_PREPARE_A_CASE")))
+      .mutateWith(SecurityMockServerConfigurers.mockJwt().authorities(SimpleGrantedAuthority("ROLE_PREPARE_A_CASE")))
       .put()
       .uri("/hearing/{hearingId}/defendant/{defendantId}/notes/draft", hearingId, defendantId)
       .contentType(MediaType.APPLICATION_JSON)
@@ -161,8 +161,8 @@ class HearingNotesControllerTest {
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
       .expectBody<HearingCaseNoteResponse>()
       .value { resp ->
-        assertThat(resp.noteId).isEqualTo(noteId)
-        assertThat(resp.note).isEqualTo("Test note")
+        AssertionsForInterfaceTypes.assertThat(resp.noteId).isEqualTo(noteId)
+        AssertionsForClassTypes.assertThat(resp.note).isEqualTo("Test note")
       }
 
     verify(hearingNotesService).updateHearingCaseNoteDraft(
@@ -184,7 +184,7 @@ class HearingNotesControllerTest {
       .thenReturn(Mono.empty())
 
     webTestClient
-      .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_PREPARE_A_CASE")))
+      .mutateWith(SecurityMockServerConfigurers.mockJwt().authorities(SimpleGrantedAuthority("ROLE_PREPARE_A_CASE")))
       .put()
       .uri("/hearing/{hearingId}/defendant/{defendantId}/notes/draft", hearingId, defendantId)
       .contentType(MediaType.APPLICATION_JSON)
@@ -212,7 +212,7 @@ class HearingNotesControllerTest {
       .thenReturn(Mono.just(true))
 
     webTestClient
-      .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_PREPARE_A_CASE")))
+      .mutateWith(SecurityMockServerConfigurers.mockJwt().authorities(SimpleGrantedAuthority("ROLE_PREPARE_A_CASE")))
       .delete()
       .uri("/hearing/{hearingId}/defendant/{defendantId}/notes/draft", hearingId, defendantId)
       .exchange()
@@ -234,7 +234,7 @@ class HearingNotesControllerTest {
       .thenReturn(Mono.just(false))
 
     webTestClient
-      .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_PREPARE_A_CASE")))
+      .mutateWith(SecurityMockServerConfigurers.mockJwt().authorities(SimpleGrantedAuthority("ROLE_PREPARE_A_CASE")))
       .delete()
       .uri("/hearing/{hearingId}/defendant/{defendantId}/notes/draft", hearingId, defendantId)
       .exchange()
@@ -256,7 +256,7 @@ class HearingNotesControllerTest {
     ).thenReturn(Mono.just(true))
 
     webTestClient
-      .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_PREPARE_A_CASE")))
+      .mutateWith(SecurityMockServerConfigurers.mockJwt().authorities(SimpleGrantedAuthority("ROLE_PREPARE_A_CASE")))
       .put()
       .uri(
         "/hearing/{hearingId}/defendants/{defendantId}/notes/{noteId}",
@@ -291,7 +291,7 @@ class HearingNotesControllerTest {
       .thenReturn(Mono.just(false))
 
     webTestClient
-      .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_PREPARE_A_CASE")))
+      .mutateWith(SecurityMockServerConfigurers.mockJwt().authorities(SimpleGrantedAuthority("ROLE_PREPARE_A_CASE")))
       .put()
       .uri("/hearing/{hearingId}/defendants/{defendantId}/notes/{noteId}", hearingId, defendantId, noteId)
       .contentType(MediaType.APPLICATION_JSON)
@@ -314,7 +314,7 @@ class HearingNotesControllerTest {
       .thenReturn(Mono.just(true))
 
     webTestClient
-      .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_PREPARE_A_CASE")))
+      .mutateWith(SecurityMockServerConfigurers.mockJwt().authorities(SimpleGrantedAuthority("ROLE_PREPARE_A_CASE")))
       .delete()
       .uri("/hearing/{hearingId}/defendants/{defendantId}/notes/{noteId}", hearingId, defendantId, noteId)
       .exchange()
@@ -330,7 +330,7 @@ class HearingNotesControllerTest {
       .thenReturn(Mono.just(false))
 
     webTestClient
-      .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_PREPARE_A_CASE")))
+      .mutateWith(SecurityMockServerConfigurers.mockJwt().authorities(SimpleGrantedAuthority("ROLE_PREPARE_A_CASE")))
       .delete()
       .uri("/hearing/{hearingId}/defendants/{defendantId}/notes/{noteId}", hearingId, defendantId, noteId)
       .exchange()
@@ -354,7 +354,7 @@ class HearingNotesControllerTest {
     val requestCaptor = argumentCaptor<HearingCaseNoteRequest>()
 
     webTestClient
-      .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_PREPARE_A_CASE")))
+      .mutateWith(SecurityMockServerConfigurers.mockJwt().authorities(SimpleGrantedAuthority("ROLE_PREPARE_A_CASE")))
       .post()
       .uri("/hearing/{hearingId}/defendant/{defendantId}/note", hearingId, defendantId)
       .contentType(MediaType.APPLICATION_JSON)
@@ -367,6 +367,6 @@ class HearingNotesControllerTest {
       eq(defendantId),
       requestCaptor.capture(),
     )
-    assertThat(requestCaptor.firstValue.createdByUUID).isEqualTo(userUuid)
+    AssertionsForInterfaceTypes.assertThat(requestCaptor.firstValue.createdByUUID).isEqualTo(userUuid)
   }
 }

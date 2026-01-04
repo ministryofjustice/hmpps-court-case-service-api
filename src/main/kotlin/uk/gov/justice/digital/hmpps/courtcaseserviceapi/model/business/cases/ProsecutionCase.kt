@@ -12,10 +12,16 @@ data class ProsecutionCase(
   @Id
   @Column("id")
   val id: UUID?,
-  val caseURN: CaseURN? = null,
+  val caseId: String?,
+  val caseNumber: String?,
+  @Column("case_urn")
+  val caseURN: List<CaseURN>? = null,
+  @Column("source_type")
   val sourceType: String?,
-  val caseMarker: CaseMarker? = null,
-  val caseDocument: CaseDocument? = null,
+  @Column("case_marker")
+  val caseMarker: List<CaseMarker>? = null,
+  @Column("case_document")
+  val caseDocument: List<CaseDocument>? = null,
   val createdAt: OffsetDateTime?,
   val createdBy: String?,
   val updatedAt: OffsetDateTime?,

@@ -28,7 +28,7 @@ class HearingNotesServiceImplTest {
   fun setUp() {
     hearingRepository = mockk()
     defendantHearingRepository = mockk()
-    hearingNotesService = HearingNotesServiceImpl(hearingRepository, defendantHearingRepository)
+    hearingNotesService = HearingNotesServiceImpl(hearingRepository)
   }
 
   @AfterEach
@@ -44,7 +44,7 @@ class HearingNotesServiceImplTest {
     val hearing = TestDataBuilder.buildHearing(hearingId = hearingId, hearingCaseNote = null)
     val savedHearing = hearing.copy(hearingCaseNote = listOf(TestDataBuilder.buildHearingCaseNote(defendantId = defendantId)))
 
-    every { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) } returns Mono.just(hearing)
+    every { hearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) } returns Mono.just(hearing)
     every { hearingRepository.save(any<Hearing>()) } returns Mono.just(savedHearing)
 
     StepVerifier.create(hearingNotesService.addHearingCaseNoteAsDraft(hearingId, defendantId, request))
@@ -57,7 +57,7 @@ class HearingNotesServiceImplTest {
       }
       .verifyComplete()
 
-    verify(exactly = 1) { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) }
+    verify(exactly = 1) { hearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) }
     verify(exactly = 1) { hearingRepository.save(any<Hearing>()) }
   }
 
@@ -73,7 +73,7 @@ class HearingNotesServiceImplTest {
     )
     val hearing = TestDataBuilder.buildHearing(hearingId = hearingId, hearingCaseNote = listOf(existingDraftNote))
 
-    every { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) } returns Mono.just(hearing)
+    every { hearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) } returns Mono.just(hearing)
 
     StepVerifier.create(hearingNotesService.addHearingCaseNoteAsDraft(hearingId, defendantId, request))
       .expectNextMatches { response ->
@@ -82,7 +82,7 @@ class HearingNotesServiceImplTest {
       }
       .verifyComplete()
 
-    verify(exactly = 1) { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) }
+    verify(exactly = 1) { hearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) }
     verify(exactly = 0) { hearingRepository.save(any<Hearing>()) }
   }
 
@@ -92,13 +92,13 @@ class HearingNotesServiceImplTest {
     val defendantId = TestDataBuilder.generateUUID()
     val request = TestDataBuilder.buildHearingCaseNoteRequest()
 
-    every { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) } returns Mono.empty()
+    every { hearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) } returns Mono.empty()
 
     StepVerifier.create(hearingNotesService.addHearingCaseNoteAsDraft(hearingId, defendantId, request))
       .expectError(HearingNotFoundException::class.java)
       .verify()
 
-    verify(exactly = 1) { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) }
+    verify(exactly = 1) { hearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) }
   }
 
   @Test
@@ -114,7 +114,7 @@ class HearingNotesServiceImplTest {
     val hearing = TestDataBuilder.buildHearing(hearingId = hearingId, hearingCaseNote = mutableListOf(existingDraftNote))
     val savedHearing = hearing.copy()
 
-    every { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) } returns Mono.just(hearing)
+    every { hearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) } returns Mono.just(hearing)
     every { hearingRepository.save(any<Hearing>()) } returns Mono.just(savedHearing)
 
     StepVerifier.create(hearingNotesService.updateHearingCaseNoteDraft(hearingId, defendantId, request))
@@ -124,7 +124,7 @@ class HearingNotesServiceImplTest {
       }
       .verifyComplete()
 
-    verify(exactly = 1) { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) }
+    verify(exactly = 1) { hearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) }
     verify(exactly = 1) { hearingRepository.save(any<Hearing>()) }
   }
 
@@ -140,13 +140,13 @@ class HearingNotesServiceImplTest {
     )
     val hearing = TestDataBuilder.buildHearing(hearingId = hearingId, hearingCaseNote = listOf(nonDraftNote))
 
-    every { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) } returns Mono.just(hearing)
+    every { hearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) } returns Mono.just(hearing)
 
     StepVerifier.create(hearingNotesService.updateHearingCaseNoteDraft(hearingId, defendantId, request))
       .expectError(HearingCaseNoteDraftNotFoundException::class.java)
       .verify()
 
-    verify(exactly = 1) { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) }
+    verify(exactly = 1) { hearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) }
   }
 
   @Test
@@ -162,14 +162,14 @@ class HearingNotesServiceImplTest {
     )
     val hearing = TestDataBuilder.buildHearing(hearingId = hearingId, hearingCaseNote = mutableListOf(existingDraftNote))
 
-    every { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) } returns Mono.just(hearing)
+    every { hearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) } returns Mono.just(hearing)
     every { hearingRepository.save(any<Hearing>()) } returns Mono.just(hearing)
 
     StepVerifier.create(hearingNotesService.deleteHearingCaseNoteDraft(hearingId, defendantId, userUUID))
       .expectNext(true)
       .verifyComplete()
 
-    verify(exactly = 1) { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) }
+    verify(exactly = 1) { hearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) }
     verify(exactly = 1) { hearingRepository.save(any<Hearing>()) }
   }
 
@@ -180,13 +180,13 @@ class HearingNotesServiceImplTest {
     val userUUID = TestDataBuilder.generateUUID()
     val hearing = TestDataBuilder.buildHearing(hearingId = hearingId, hearingCaseNote = null)
 
-    every { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) } returns Mono.just(hearing)
+    every { hearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) } returns Mono.just(hearing)
 
     StepVerifier.create(hearingNotesService.deleteHearingCaseNoteDraft(hearingId, defendantId, userUUID))
       .expectError(HearingCaseNoteDraftNotFoundException::class.java)
       .verify()
 
-    verify(exactly = 1) { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) }
+    verify(exactly = 1) { hearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) }
   }
 
   @Test
@@ -196,20 +196,21 @@ class HearingNotesServiceImplTest {
     val noteId = TestDataBuilder.generateUUID()
     val request = TestDataBuilder.buildHearingCaseNoteRequest(note = "Updated note")
     val existingNote = TestDataBuilder.buildHearingCaseNote(
+      id = noteId,
       defendantId = defendantId,
       createdByUUID = request.createdByUUID,
       isDraft = false,
     )
     val hearing = TestDataBuilder.buildHearing(hearingId = hearingId, hearingCaseNote = mutableListOf(existingNote))
 
-    every { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) } returns Mono.just(hearing)
+    every { hearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) } returns Mono.just(hearing)
     every { hearingRepository.save(any<Hearing>()) } returns Mono.just(hearing)
 
     StepVerifier.create(hearingNotesService.updateHearingCaseNote(hearingId, defendantId, noteId, request))
       .expectNext(true)
       .verifyComplete()
 
-    verify(exactly = 1) { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) }
+    verify(exactly = 1) { hearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) }
     verify(exactly = 1) { hearingRepository.save(any<Hearing>()) }
   }
 
@@ -221,13 +222,13 @@ class HearingNotesServiceImplTest {
     val request = TestDataBuilder.buildHearingCaseNoteRequest()
     val hearing = TestDataBuilder.buildHearing(hearingId = hearingId, hearingCaseNote = null)
 
-    every { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) } returns Mono.just(hearing)
+    every { hearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) } returns Mono.just(hearing)
 
     StepVerifier.create(hearingNotesService.updateHearingCaseNote(hearingId, defendantId, noteId, request))
       .expectError(HearingCaseNoteNotFoundException::class.java)
       .verify()
 
-    verify(exactly = 1) { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) }
+    verify(exactly = 1) { hearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) }
   }
 
   @Test
@@ -237,6 +238,7 @@ class HearingNotesServiceImplTest {
     val noteId = TestDataBuilder.generateUUID()
     val userUUID = TestDataBuilder.generateUUID()
     val existingNote = TestDataBuilder.buildHearingCaseNote(
+      id = noteId,
       defendantId = defendantId,
       createdByUUID = userUUID,
       isDraft = false,
@@ -244,14 +246,14 @@ class HearingNotesServiceImplTest {
     )
     val hearing = TestDataBuilder.buildHearing(hearingId = hearingId, hearingCaseNote = mutableListOf(existingNote))
 
-    every { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) } returns Mono.just(hearing)
+    every { hearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) } returns Mono.just(hearing)
     every { hearingRepository.save(any<Hearing>()) } returns Mono.just(hearing)
 
     StepVerifier.create(hearingNotesService.deleteHearingCaseNote(hearingId, defendantId, noteId, userUUID))
       .expectNext(true)
       .verifyComplete()
 
-    verify(exactly = 1) { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) }
+    verify(exactly = 1) { hearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) }
     verify(exactly = 1) { hearingRepository.save(any<Hearing>()) }
   }
 
@@ -263,12 +265,12 @@ class HearingNotesServiceImplTest {
     val userUUID = TestDataBuilder.generateUUID()
     val hearing = TestDataBuilder.buildHearing(hearingId = hearingId, hearingCaseNote = null)
 
-    every { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) } returns Mono.just(hearing)
+    every { hearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) } returns Mono.just(hearing)
 
     StepVerifier.create(hearingNotesService.deleteHearingCaseNote(hearingId, defendantId, noteId, userUUID))
       .expectError(HearingCaseNoteNotFoundException::class.java)
       .verify()
 
-    verify(exactly = 1) { defendantHearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) }
+    verify(exactly = 1) { hearingRepository.findByDefendantIdAndHearingId(defendantId, hearingId) }
   }
 }

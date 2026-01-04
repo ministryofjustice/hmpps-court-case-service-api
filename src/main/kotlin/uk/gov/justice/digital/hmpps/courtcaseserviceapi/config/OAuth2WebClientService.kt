@@ -1,8 +1,12 @@
 package uk.gov.justice.digital.hmpps.courtcaseserviceapi.config
 
+import org.springframework.http.HttpEntity
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.security.oauth2.client.web.reactive.function.client.ServerOAuth2AuthorizedClientExchangeFilterFunction
 import org.springframework.stereotype.Component
+import org.springframework.util.MultiValueMap
+import org.springframework.web.reactive.function.BodyInserters
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import org.springframework.web.reactive.function.client.bodyToMono
@@ -19,6 +23,24 @@ class OAuth2WebClientService(private val webClient: WebClient) {
   fun <T, R> post(url: String, requestBody: T, clientRegistrationId: String, responseType: Class<R>): Mono<R> = webClient.post().uri(url)
     .attributes(ServerOAuth2AuthorizedClientExchangeFilterFunction.clientRegistrationId(clientRegistrationId))
     .bodyValue(requestBody!!)
+    .retrieve()
+    .bodyToMono(responseType)
+    .retryWhen(
+      Retry.backoff(3, Duration.ofSeconds(2))
+        .filter(this::isRetryableException),
+    )
+    .onErrorResume(this::handleError)
+
+  fun <R> post(
+    url: String,
+    requestBody: MultiValueMap<String, HttpEntity<*>>,
+    clientRegistrationId: String,
+    responseType: Class<R>,
+  ): Mono<R> = webClient.post()
+    .uri(url)
+    .attributes(ServerOAuth2AuthorizedClientExchangeFilterFunction.clientRegistrationId(clientRegistrationId))
+    .contentType(MediaType.MULTIPART_FORM_DATA)
+    .body(BodyInserters.fromMultipartData(requestBody))
     .retrieve()
     .bodyToMono(responseType)
     .retryWhen(

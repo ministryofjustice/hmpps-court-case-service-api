@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.courtcaseserviceapi.model.exceptions
 
+import java.util.UUID
+
 open class ApiException(message: String, cause: Throwable) : RuntimeException(message, cause)
 class ClientException(message: String, cause: Throwable) : ApiException(message, cause)
 class ServerException(message: String, cause: Throwable) : ApiException(message, cause)
@@ -19,3 +21,11 @@ class HearingCaseNoteNotFoundException : RuntimeException {
     String.format(MESSAGE, noteId, defendantId, hearingId, userUUID),
   )
 }
+
+class UnsupportedFileTypeException(
+  extension: String?,
+  val supportedExtensions: List<String>,
+) : RuntimeException("The file extension '$extension' is not supported. Supported extensions: $supportedExtensions")
+
+class DefendantNotFoundException(id: UUID) : RuntimeException("Defendant not found for id '$id'")
+class CaseNotFoundException(id: UUID) : RuntimeException("Prosecution case not found for id '$id'")
