@@ -14,7 +14,6 @@ class FeatureFlagService(
   private val featureFlagClient: FeatureFlagClient,
 ) {
 
-  @Cacheable("featureFlags")
   fun isFeatureEnabled(flagKey: String, context: Map<String, String>? = null): Mono<FeatureFlagResponse> {
     val request = FeatureFlagRequest(
       entityId = flagKey,
