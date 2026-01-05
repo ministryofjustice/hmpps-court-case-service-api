@@ -14,7 +14,6 @@ class FeatureFlagService(
   private val featureFlagClient: FeatureFlagClient,
 ) {
 
-  @Cacheable("featureFlags")
   fun isFeatureEnabled(flagKey: String, context: Map<String, String>? = null): Mono<FeatureFlagResponse> {
     val request = FeatureFlagRequest(
       entityId = flagKey,
@@ -22,10 +21,5 @@ class FeatureFlagService(
       context = context,
     )
     return featureFlagClient.getFeatureFlags(request)
-  }
-
-  @Scheduled(cron = "0 */10 * * * *")
-  @CacheEvict(value = ["featureFlags"], allEntries = true)
-  fun evictFeatureFlagsCache() {
   }
 }
