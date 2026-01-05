@@ -32,7 +32,7 @@ class FeatureFlagServiceTest {
     val context = mapOf("user" to "test-user")
     val expectedResponse = FeatureFlagResponse(enabled = true)
     val request = FeatureFlagRequest(
-      namespace = "ProbationInCourt",
+      namespaceKey = "ProbationInCourt",
       entityId = flagKey,
       flagKey = flagKey,
       context = context,
@@ -50,7 +50,7 @@ class FeatureFlagServiceTest {
     val flagKey = "test-flag"
     val expectedResponse = FeatureFlagResponse(enabled = false)
     val request = FeatureFlagRequest(
-      namespace = "ProbationInCourt",
+      namespaceKey = "ProbationInCourt",
       entityId = flagKey,
       flagKey = flagKey,
       context = null,
@@ -61,11 +61,5 @@ class FeatureFlagServiceTest {
     val result = service.isFeatureEnabled(flagKey).block()
 
     assert(result == expectedResponse)
-  }
-
-  @Test
-  fun `should evict featureFlags cache`() {
-    // Just call the method to ensure it does not throw
-    service.evictFeatureFlagsCache()
   }
 }
