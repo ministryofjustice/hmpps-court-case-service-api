@@ -1,0 +1,37 @@
+package uk.gov.justice.digital.hmpps.courtcaseserviceapi.model.business.converters
+
+import com.fasterxml.jackson.databind.ObjectMapper
+import io.r2dbc.postgresql.codec.Json
+import org.slf4j.LoggerFactory
+import org.springframework.core.convert.converter.Converter
+import org.springframework.data.convert.ReadingConverter
+import org.springframework.data.convert.WritingConverter
+import uk.gov.justice.digital.hmpps.courtcaseserviceapi.model.business.hearing.HearingCaseNote
+
+@WritingConverter
+class HearingCaseNoteEncoder : Converter<HearingCaseNote, Json> {
+  private val objMapper = ObjectMapper()
+
+  companion object {
+    private val log = LoggerFactory.getLogger(this::class.java)
+  }
+
+  override fun convert(source: HearingCaseNote): Json {
+    log.info("Converting Hearing Case Note to JSON")
+    return Json.of(objMapper.writeValueAsString(source))
+  }
+}
+
+@ReadingConverter
+class HearingCaseNoteDecoder : Converter<Json, HearingCaseNote> {
+  private val objectMapper = ObjectMapper()
+
+  companion object {
+    private val log = LoggerFactory.getLogger(this::class.java)
+  }
+
+  override fun convert(source: Json): HearingCaseNote {
+    log.info("Converting JSON to Hearing Case Note")
+    return objectMapper.readValue(source.asString(), HearingCaseNote::class.java)
+  }
+}
