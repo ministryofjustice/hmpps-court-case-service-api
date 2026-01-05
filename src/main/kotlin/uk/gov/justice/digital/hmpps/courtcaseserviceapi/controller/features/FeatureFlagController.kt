@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RestController
 import reactor.core.publisher.Mono
 import uk.gov.justice.digital.hmpps.courtcaseserviceapi.client.FeatureFlagRequest
 import uk.gov.justice.digital.hmpps.courtcaseserviceapi.client.FeatureFlagResponse
-import uk.gov.justice.digital.hmpps.courtcaseserviceapi.service.FeatureFlagService
+import uk.gov.justice.digital.hmpps.courtcaseserviceapi.service.featureflag.FeatureFlagService
 
 @RestController
 @RequestMapping("/feature-flags")

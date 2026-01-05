@@ -11,7 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension
 import reactor.core.publisher.Mono
 import uk.gov.justice.digital.hmpps.courtcaseserviceapi.client.FeatureFlagRequest
 import uk.gov.justice.digital.hmpps.courtcaseserviceapi.client.FeatureFlagResponse
-import uk.gov.justice.digital.hmpps.courtcaseserviceapi.service.FeatureFlagService
+import uk.gov.justice.digital.hmpps.courtcaseserviceapi.service.featureflag.FeatureFlagService
 
 @ExtendWith(MockitoExtension::class)
 class FeatureFlagControllerTest {
