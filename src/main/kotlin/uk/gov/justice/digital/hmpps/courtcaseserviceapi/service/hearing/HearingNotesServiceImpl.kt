@@ -120,9 +120,9 @@ class HearingNotesServiceImpl(
           updatedBy = userUUID.toString(),
         )
 
-        val updatedNotes = existingCaseNotes?.map {
+        val updatedNotes = existingCaseNotes.map {
           if (it.id == matchingCaseNote.id) updatedNote else it
-        } ?: listOf(updatedNote)
+        }
 
         saveWithUpdatedNotes(existingHearing, updatedNotes)
           .thenReturn(true)
@@ -161,9 +161,9 @@ class HearingNotesServiceImpl(
           version = (matchingCaseNote.version ?: 0) + 1,
         )
 
-        val updatedNotes = existingCaseNotes?.map {
+        val updatedNotes = existingCaseNotes.map {
           if (it.id == matchingCaseNote.id) updatedNote else it
-        } ?: listOf(updatedNote)
+        }
 
         saveWithUpdatedNotes(existingHearing, updatedNotes)
           .thenReturn(true)
@@ -196,9 +196,9 @@ class HearingNotesServiceImpl(
           updatedBy = userUUID.toString(),
         )
 
-        val updatedNotes = existingCaseNotes?.map {
+        val updatedNotes = existingCaseNotes.map {
           if (it.id == matchingCaseNote.id) updatedNote else it
-        } ?: listOf(updatedNote)
+        }
 
         saveWithUpdatedNotes(existingHearing, updatedNotes)
           .thenReturn(true)

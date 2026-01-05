@@ -33,7 +33,7 @@ class DocumentManagementServiceImpl(
   private val objectMapper: ObjectMapper,
   @Value($$"${hmpps-document-management-api.document-type}") private val picDocumentType: String,
   @Value($$"${hmpps-document-management-api.create-document}") private val documentManagementUploadUrl: String,
-  @Value($$"${spring.security.oauth2.client.registration.hmpps-document-management-api-client}") private val documentClientRegistrationId: String,
+  private val documentClientRegistrationId: String = "hmpps-document-management-api-client",
   @Value($$"${hmpps-document-management-api.allowed-file-extensions}") var allowedExtensions: List<String>,
 ) : DocumentManagementService {
 
@@ -45,7 +45,7 @@ class DocumentManagementServiceImpl(
     file: FilePart,
   ): Mono<CaseDocumentResponse> {
     return Mono.defer {
-      val filename = file.filename()?.takeUnless { it.isBlank() }
+      val filename = file.filename().takeUnless { it.isBlank() }
         ?: return@defer Mono.error(IllegalArgumentException("Uploaded file must have a name"))
 
       val extension = filename.substringAfterLast('.', "").lowercase()
