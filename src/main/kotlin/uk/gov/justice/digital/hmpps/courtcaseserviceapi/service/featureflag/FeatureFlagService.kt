@@ -1,8 +1,5 @@
 package uk.gov.justice.digital.hmpps.courtcaseserviceapi.service.featureflag
 
-import org.springframework.cache.annotation.CacheEvict
-import org.springframework.cache.annotation.Cacheable
-import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Mono
 import uk.gov.justice.digital.hmpps.courtcaseserviceapi.client.FeatureFlagClient
