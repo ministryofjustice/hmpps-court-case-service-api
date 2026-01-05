@@ -62,10 +62,4 @@ class FeatureFlagServiceTest {
 
     assert(result == expectedResponse)
   }
-
-  @Test
-  fun `should evict featureFlags cache`() {
-    // Just call the method to ensure it does not throw
-    service.evictFeatureFlagsCache()
-  }
 }
